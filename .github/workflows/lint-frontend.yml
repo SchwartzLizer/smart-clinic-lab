@@ -1,0 +1,14 @@
+name: Lint Frontend
+on: [push, pull_request]
+jobs:
+  lint-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm install -g htmlhint stylelint stylelint-config-standard eslint
+      - run: htmlhint "app/src/main/resources/**/*.html" || true
+      - run: stylelint "app/src/main/resources/static/assets/css/**/*.css" --config-basedir . || true
+      - run: eslint "app/src/main/resources/static/js/**/*.js" || true
