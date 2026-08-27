@@ -12,4 +12,4 @@ jobs:
           cache: maven
       - name: Compile with Maven
         working-directory: app
-        run: mvn --batch-mode clean compile
+        run: ./mvnw --batch-mode clean compile

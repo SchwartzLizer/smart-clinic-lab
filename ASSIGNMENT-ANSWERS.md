@@ -51,10 +51,14 @@ patient
 ### Q21 — GetDailyAppointmentReportByDoctor('2025-04-15')
 
 ```text
-Dr. Emily Adams | 2025-04-15 09:00:00 | Noah Brooks    | 888-888-8888
-Dr. Mark Johnson | 2025-04-15 10:00:00 | Liam King      | 888-666-6666
-Dr. Sarah Lee    | 2025-04-15 11:00:00 | Michael Jordan | 888-444-4444
-Dr. Tom Wilson   | 2025-04-15 15:00:00 | Sophia Lane    | 888-777-7777
++------------------+----------------------------+--------+----------------+---------------+
+| doctor_name      | appointment_time           | status | patient_name   | patient_phone |
++------------------+----------------------------+--------+----------------+---------------+
+| Dr. Emily Adams  | 2025-04-15 09:00:00.000000 |      1 | Noah Brooks    | 888-888-8888  |
+| Dr. Mark Johnson | 2025-04-15 10:00:00.000000 |      1 | Liam King      | 888-666-6666  |
+| Dr. Sarah Lee    | 2025-04-15 11:00:00.000000 |      1 | Michael Jordan | 888-444-4444  |
+| Dr. Tom Wilson   | 2025-04-15 15:00:00.000000 |      1 | Sophia Lane    | 888-777-7777  |
++------------------+----------------------------+--------+----------------+---------------+
 ```
 
 ### Q22 — GetDoctorWithMostPatientsByMonth(4, 2025)

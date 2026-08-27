@@ -21,6 +21,8 @@ class AssignmentCriteriaTests {
     @Test void q6AppointmentMethodsExist() throws Exception {
         assertEquals(int.class,AppointmentService.class.getMethod("bookAppointment",com.project.back_end.models.Appointment.class).getReturnType());
         assertEquals(Map.class,AppointmentService.class.getMethod("getAppointment",String.class,LocalDate.class,String.class).getReturnType());
+        assertEquals(java.util.List.class,
+                AppointmentService.class.getMethod("getAppointmentsForDoctorOnDate",Long.class,LocalDate.class).getReturnType());
     }
     @Test void q7PrescriptionPostExists() throws Exception {
         var method=PrescriptionController.class.getMethod("savePrescription",String.class,com.project.back_end.models.Prescription.class);
