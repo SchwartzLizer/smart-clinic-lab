@@ -70,7 +70,7 @@ class HealthEndpointTests {
         mvc.perform(get("/actuator/health")).andExpect(status().isOk());
         mvc.perform(get("/actuator/info")).andExpect(status().isOk());
         mvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
-        mvc.perform(get("/actuator/health").header("Authorization", "Bearer eyJ-do-not-expose"))
+        mvc.perform(get("/actuator/health").header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.components").doesNotExist());
     }

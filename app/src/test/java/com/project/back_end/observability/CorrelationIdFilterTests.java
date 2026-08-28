@@ -29,7 +29,7 @@ class CorrelationIdFilterTests {
     void echoesSuppliedIdAndCleansMdcAfterRequest() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(CorrelationIdFilter.HEADER_NAME, "request-123");
-        request.addHeader("Authorization", "Bearer eyJ-do-not-log");
+        request.addHeader("Authorization", "Bearer test-token");
         MockHttpServletResponse response = new MockHttpServletResponse();
         AtomicReference<String> seenInChain = new AtomicReference<>();
 
@@ -39,7 +39,7 @@ class CorrelationIdFilterTests {
         assertThat(response.getHeader(CorrelationIdFilter.HEADER_NAME)).isEqualTo("request-123");
         assertThat(seenInChain).hasValue("request-123");
         assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull();
-        assertThat(response.getContentAsString()).doesNotContain("eyJ-do-not-log");
+        assertThat(response.getContentAsString()).doesNotContain("test-token");
     }
 
     @Test
