@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,12 +50,14 @@ public class DoctorController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<DoctorResponse> createDoctor(@Valid @RequestBody DoctorCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(doctors.createDoctor(request));
     }
 
     @PutMapping("/{doctorId}")
     @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
     public DoctorResponse updateDoctor(@PathVariable Long doctorId,
             @Valid @RequestBody DoctorUpdateRequest request) {
         return doctors.updateDoctor(doctorId, request);
@@ -62,6 +65,7 @@ public class DoctorController {
 
     @DeleteMapping("/{doctorId}")
     @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteDoctor(@PathVariable Long doctorId) {
         doctors.deleteDoctor(doctorId);
         return ResponseEntity.noContent().build();

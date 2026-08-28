@@ -4,6 +4,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.project.back_end.DTO.patient.PatientResponse;
 import com.project.back_end.security.AuthenticatedUser;
@@ -19,6 +20,7 @@ public class PatientController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     public PatientResponse getMyProfile(@AuthenticationPrincipal AuthenticatedUser principal) {
         return patients.getMyProfile(principal.accountId());
     }

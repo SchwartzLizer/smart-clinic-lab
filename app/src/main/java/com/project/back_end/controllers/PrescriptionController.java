@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.project.back_end.DTO.prescription.PrescriptionCreateRequest;
 import com.project.back_end.DTO.prescription.PrescriptionResponse;
@@ -30,6 +31,7 @@ public class PrescriptionController {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PrescriptionResponse> createPrescription(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody PrescriptionCreateRequest request) {
@@ -37,6 +39,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/{appointmentId}")
+    @SecurityRequirement(name = "bearerAuth")
     public PrescriptionResponse getPrescription(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable Long appointmentId) {

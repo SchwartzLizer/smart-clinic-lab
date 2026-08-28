@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.project.back_end.DTO.appointment.AppointmentCreateRequest;
 import com.project.back_end.DTO.appointment.AppointmentResponse;
@@ -35,6 +36,7 @@ public class AppointmentController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "bearerAuth")
     public List<AppointmentResponse> getAppointments(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestParam(required = false) String status,
@@ -44,6 +46,7 @@ public class AppointmentController {
     }
 
     @PostMapping
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<AppointmentResponse> createAppointment(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody AppointmentCreateRequest request) {
@@ -51,6 +54,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{appointmentId}")
+    @SecurityRequirement(name = "bearerAuth")
     public AppointmentResponse updateAppointment(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable Long appointmentId,
@@ -59,6 +63,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{appointmentId}")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteAppointment(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @PathVariable Long appointmentId) {
