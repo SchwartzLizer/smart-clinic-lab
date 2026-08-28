@@ -113,15 +113,12 @@ window.loginPatient = async function () {
       email,
       password
     }
-    console.log("loginPatient :: ", data)
     const response = await patientLogin(data);
-    console.log("Status Code:", response.status);
-    console.log("Response OK:", response.ok);
     if (response.ok) {
       const result = await response.json();
-      console.log(result);
-      selectRole('loggedPatient');
       localStorage.setItem('token', result.token)
+      localStorage.setItem('accountId', result.accountId)
+      localStorage.setItem('userRole', 'loggedPatient')
       window.location.href = '/pages/loggedPatientDashboard.html';
     } else {
       alert('❌ Invalid credentials!');

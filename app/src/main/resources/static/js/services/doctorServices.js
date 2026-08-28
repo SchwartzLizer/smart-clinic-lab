@@ -1,7 +1,44 @@
 import { API_BASE_URL } from "../config/config.js";
-const DOCTOR_API=`${API_BASE_URL}/doctor`;
-async function parse(response){const body=await response.json();if(!response.ok)throw new Error(body.message||"Request failed");return body;}
-export async function getDoctors(){try{return (await parse(await fetch(DOCTOR_API))).doctors||[];}catch(error){console.error(error);return [];}}
-export async function deleteDoctor(id,token){try{return {success:true,message:(await parse(await fetch(`${DOCTOR_API}/${id}/${token}`,{method:"DELETE"}))).message};}catch(error){return {success:false,message:error.message};}}
-export async function saveDoctor(doctor,token){try{return {success:true,message:(await parse(await fetch(`${DOCTOR_API}/${token}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(doctor)}))).message};}catch(error){return {success:false,message:error.message};}}
-export async function filterDoctors(name="all",time="all",specialty="all"){try{return await parse(await fetch(`${DOCTOR_API}/filter/${encodeURIComponent(name||"all")}/${encodeURIComponent(time||"all")}/${encodeURIComponent(specialty||"all")}`));}catch(error){console.error(error);return {doctors:[]};}}
+import { readJson } from "./httpClient.js";
+
+const DOCTORS_API = `${API_BASE_URL}/doctors`;
+
+export async function getDoctors() {
+  const page = await readJson(`${DOCTORS_API}?size=100`);
+  return page.content ?? [];
+}
+
+export async function deleteDoctor(id) {
+  try {
+    await readJson(`${DOCTORS_API}/${encodeURIComponent(id)}`, { method: "DELETE" });
+    return { success: true, message: "Doctor deleted successfully" };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+export async function saveDoctor(doctor) {
+  try {
+    await readJson(DOCTORS_API, {
+      method: "POST",
+      body: JSON.stringify(doctor),
+    });
+    return { success: true, message: "Doctor added successfully" };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+export async function filterDoctors(name = "", period = "", specialty = "") {
+  const params = new URLSearchParams({ size: "100" });
+  if (name && name !== "all") params.set("name", name);
+  if (period && period !== "all") params.set("period", period);
+  if (specialty && specialty !== "all") params.set("specialty", specialty);
+  try {
+    const page = await readJson(`${DOCTORS_API}?${params}`);
+    return { doctors: page.content ?? [] };
+  } catch (error) {
+    console.error(error);
+    return { doctors: [] };
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "smart-clinic-portfolio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:js": "node --test app/src/test/js/httpClient.test.mjs"
+  }
+}
