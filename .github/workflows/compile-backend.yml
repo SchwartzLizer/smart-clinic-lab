@@ -1,7 +1,7 @@
-name: Compile Java Backend
+name: Verify Java Backend
 on: [push, pull_request]
 jobs:
-  compile-backend:
+  verify-backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -10,6 +10,6 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Compile with Maven
+      - name: Run unit, integration, coverage, and Checkstyle verification
         working-directory: app
-        run: ./mvnw --batch-mode clean compile
+        run: ./mvnw --batch-mode clean verify

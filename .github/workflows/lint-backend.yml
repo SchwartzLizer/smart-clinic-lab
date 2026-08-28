@@ -9,5 +9,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - run: curl -L -o checkstyle.jar https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.12.1/checkstyle-10.12.1-all.jar
-      - run: java -jar checkstyle.jar -c /google_checks.xml app/src/main/java/com/project/back_end || true
+      - name: Run repository Checkstyle rules
+        working-directory: app
+        run: ./mvnw --batch-mode checkstyle:check

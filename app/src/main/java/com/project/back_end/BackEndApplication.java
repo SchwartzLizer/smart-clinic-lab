@@ -10,8 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class BackEndApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(BackEndApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(BackEndApplication.class, args);
+    }
 
 }
