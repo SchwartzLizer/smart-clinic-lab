@@ -9,18 +9,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.Clock;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,7 +34,8 @@ import com.project.back_end.services.DoctorService;
 import com.project.back_end.services.TokenService;
 
 @WebMvcTest(controllers = DoctorController.class, properties = "app.demo-data.enabled=false")
-@Import({ SecurityConfig.class, DoctorService.class, DoctorControllerTests.TestTokenConfiguration.class })
+@EnableConfigurationProperties(JwtProperties.class)
+@Import({ SecurityConfig.class, DoctorService.class, TokenService.class })
 class DoctorControllerTests {
 
     @Autowired
@@ -95,16 +92,6 @@ class DoctorControllerTests {
         mvc.perform(delete("/api/doctors/99").header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"));
-    }
-
-    @TestConfiguration
-    static class TestTokenConfiguration {
-        @Bean
-        @Primary
-        TokenService doctorTokenService() {
-            return new TokenService(new JwtProperties(
-                    "test-signing-key-that-is-at-least-32-bytes-long", Duration.ofHours(1)), Clock.systemUTC());
-        }
     }
 
     private static Doctor doctor(Long id) {

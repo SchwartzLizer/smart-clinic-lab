@@ -17,6 +17,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment,Long> {
     @Modifying @Transactional @Query("DELETE FROM Appointment a WHERE a.doctor.id=:doctorId")
     void deleteAllByDoctorId(@Param("doctorId") Long doctorId);
     List<Appointment> findByPatientId(Long patientId);
+    List<Appointment> findByDoctorIdOrderByAppointmentTimeAsc(Long doctorId);
     List<Appointment> findByPatientIdAndStatusOrderByAppointmentTimeAsc(Long patientId,int status);
     @Query("SELECT a FROM Appointment a JOIN FETCH a.doctor d JOIN FETCH a.patient p WHERE LOWER(d.name) LIKE LOWER(CONCAT('%',:doctorName,'%')) AND p.id=:patientId")
     List<Appointment> filterByDoctorNameAndPatientId(@Param("doctorName") String doctorName,@Param("patientId") Long patientId);

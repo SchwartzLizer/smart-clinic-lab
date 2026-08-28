@@ -6,6 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.back_end.DTO.AppointmentDTO;
+import com.project.back_end.DTO.patient.PatientResponse;
+import com.project.back_end.exceptions.ResourceNotFoundException;
+import com.project.back_end.mappers.PatientMapper;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Patient;
 import com.project.back_end.repo.AppointmentRepository;
@@ -13,7 +16,27 @@ import com.project.back_end.repo.PatientRepository;
 @Service
 public class PatientService {
     private final PatientRepository patients;private final AppointmentRepository appointments;private final TokenService tokens;
-    public PatientService(PatientRepository patients,AppointmentRepository appointments,TokenService tokens){this.patients=patients;this.appointments=appointments;this.tokens=tokens;}
+    private final PatientMapper mapper;
+
+    public PatientService(PatientRepository patients,AppointmentRepository appointments,TokenService tokens){
+        this(patients, appointments, tokens, new PatientMapper());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PatientService(PatientRepository patients, AppointmentRepository appointments, TokenService tokens,
+            PatientMapper mapper) {
+        this.patients = patients;
+        this.appointments = appointments;
+        this.tokens = tokens;
+        this.mapper = mapper;
+    }
+
+    @Transactional(readOnly = true)
+    public PatientResponse getMyProfile(Long accountId) {
+        Patient patient = patients.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+        return mapper.toResponse(patient);
+    }
     @Transactional public int createPatient(Patient patient){try{patients.save(patient);return 1;}catch(Exception e){return 0;}}
     @Transactional(readOnly=true) public Map<String,Object> getPatientAppointment(Long id){return appointmentBody(appointments.findByPatientId(id));}
     @Transactional(readOnly=true) public Map<String,Object> filterByCondition(Long id,String condition){return appointmentBody(appointments.findByPatientIdAndStatusOrderByAppointmentTimeAsc(id,status(condition)));}
