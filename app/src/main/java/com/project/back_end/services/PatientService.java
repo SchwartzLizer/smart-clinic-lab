@@ -20,7 +20,7 @@ public class PatientService {
     @Transactional(readOnly=true) public Map<String,Object> filterByDoctor(Long id,String name){return appointmentBody(appointments.filterByDoctorNameAndPatientId(name,id));}
     @Transactional(readOnly=true) public Map<String,Object> filterByDoctorAndCondition(Long id,String name,String condition){return appointmentBody(appointments.filterByDoctorNameAndPatientIdAndStatus(name,id,status(condition)));}
     public ResponseEntity<Map<String,Object>> getPatientDetails(String token){
-        Patient patient=patients.findByEmail(tokens.extractIdentifier(token));Map<String,Object> body=new LinkedHashMap<>();body.put("patient",patient);return ResponseEntity.ok(body);
+        Patient patient=patients.findByEmail(tokens.extractIdentifier(token)).orElse(null);Map<String,Object> body=new LinkedHashMap<>();body.put("patient",patient);return ResponseEntity.ok(body);
     }
     private int status(String condition){return "past".equalsIgnoreCase(condition)||"completed".equalsIgnoreCase(condition)?1:0;}
     private Map<String,Object> appointmentBody(List<Appointment> list){Map<String,Object> body=new LinkedHashMap<>();body.put("appointments",list.stream().map(AppointmentDTO::new).toList());return body;}

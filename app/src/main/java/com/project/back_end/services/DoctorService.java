@@ -26,12 +26,12 @@ public class DoctorService {
         return doctor.getAvailableTimes().stream().filter(slot->!times.contains(slotStart(slot))).toList();
     }
     private LocalTime slotStart(String slot){return LocalTime.parse(slot.split("-")[0].trim());}
-    @Transactional public int saveDoctor(Doctor d){try{if(doctors.findByEmail(d.getEmail())!=null)return -1;doctors.save(d);return 1;}catch(Exception e){return 0;}}
+    @Transactional public int saveDoctor(Doctor d){try{if(doctors.findByEmail(d.getEmail()).isPresent())return -1;doctors.save(d);return 1;}catch(Exception e){return 0;}}
     @Transactional public int updateDoctor(Doctor d){try{if(d.getId()==null||!doctors.existsById(d.getId()))return -1;doctors.save(d);return 1;}catch(Exception e){return 0;}}
     @Transactional(readOnly=true) public List<Doctor> getDoctors(){return doctors.findAll();}
     @Transactional public int deleteDoctor(long id){try{if(!doctors.existsById(id))return -1;appointments.deleteAllByDoctorId(id);doctors.deleteById(id);return 1;}catch(Exception e){return 0;}}
     public ResponseEntity<Map<String,String>> validateDoctor(Login login){
-        Doctor d=doctors.findByEmail(login.getIdentifier());
+        Doctor d=doctors.findByEmail(login.getIdentifier()).orElse(null);
         if(d==null||!d.getPassword().equals(login.getPassword()))return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Invalid credentials"));
         return ResponseEntity.ok(Map.of("token",tokens.generateToken(d.getEmail()),"message","Login successful","id",d.getId().toString()));
     }
