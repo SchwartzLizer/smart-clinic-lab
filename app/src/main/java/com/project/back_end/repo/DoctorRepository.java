@@ -9,6 +9,7 @@ import com.project.back_end.models.Doctor;
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findByEmail(String email);
+    boolean existsByPhone(String phone);
     @Query("SELECT DISTINCT d FROM Doctor d LEFT JOIN FETCH d.availableTimes WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Doctor> findByNameLike(@Param("name") String name);
     @Query("SELECT DISTINCT d FROM Doctor d LEFT JOIN FETCH d.availableTimes WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%')) AND LOWER(d.specialty)=LOWER(:specialty)")

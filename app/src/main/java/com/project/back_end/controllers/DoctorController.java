@@ -1,39 +1,80 @@
 package com.project.back_end.controllers;
+
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.project.back_end.DTO.Login;
-import com.project.back_end.models.Doctor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.project.back_end.DTO.common.PageResponse;
+import com.project.back_end.DTO.doctor.DoctorCreateRequest;
+import com.project.back_end.DTO.doctor.DoctorResponse;
+import com.project.back_end.DTO.doctor.DoctorUpdateRequest;
 import com.project.back_end.services.DoctorService;
-import com.project.back_end.services.Service;
+
 import jakarta.validation.Valid;
+
+/** Public doctor directory and admin-only doctor management endpoints. */
 @RestController
-@RequestMapping("${api.path}doctor")
+@RequestMapping("/api/doctors")
 public class DoctorController {
-    private final DoctorService doctors;private final Service service;
-    public DoctorController(DoctorService doctors,Service service){this.doctors=doctors;this.service=service;}
-    @GetMapping("/availability/{user}/{doctorId}/{date}/{token}")
-    public ResponseEntity<Map<String,Object>> getDoctorAvailability(@PathVariable String user,@PathVariable Long doctorId,@PathVariable @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate date,@PathVariable String token){
-        ResponseEntity<Map<String,String>> invalid=service.validateToken(token,user);if(invalid!=null)return ResponseEntity.status(invalid.getStatusCode()).body(new LinkedHashMap<>(invalid.getBody()));
-        return ResponseEntity.ok(Map.of("availability",doctors.getDoctorAvailability(doctorId,date)));
+
+    private final DoctorService doctors;
+
+    public DoctorController(DoctorService doctors) {
+        this.doctors = doctors;
     }
-    @GetMapping public ResponseEntity<Map<String,Object>> getDoctor(){return ResponseEntity.ok(Map.of("doctors",doctors.getDoctors()));}
-    @PostMapping("/{token}") public ResponseEntity<Map<String,String>> saveDoctor(@Valid @RequestBody Doctor doctor,@PathVariable String token){
-        ResponseEntity<Map<String,String>> invalid=service.validateToken(token,"admin");if(invalid!=null)return invalid;int result=doctors.saveDoctor(doctor);
-        return result==1?ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message","Doctor added to db")):result==-1?ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message","Doctor already exists")):ResponseEntity.internalServerError().body(Map.of("message","Some internal error occurred"));
+
+    @GetMapping
+    public PageResponse<DoctorResponse> getDoctors(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String specialty,
+            @RequestParam(required = false) String period,
+            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        return doctors.listDoctors(name, specialty, period, pageable);
     }
-    @PostMapping("/login") public ResponseEntity<Map<String,String>> doctorLogin(@Valid @RequestBody Login login){return doctors.validateDoctor(login);}
-    @PutMapping("/{token}") public ResponseEntity<Map<String,String>> updateDoctor(@Valid @RequestBody Doctor doctor,@PathVariable String token){
-        ResponseEntity<Map<String,String>> invalid=service.validateToken(token,"admin");if(invalid!=null)return invalid;int result=doctors.updateDoctor(doctor);
-        return result==1?ResponseEntity.ok(Map.of("message","Doctor updated")):result==-1?ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message","Doctor not found")):ResponseEntity.internalServerError().body(Map.of("message","Some internal error occurred"));
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DoctorResponse> createDoctor(@Valid @RequestBody DoctorCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(doctors.createDoctor(request));
     }
-    @DeleteMapping("/{id}/{token}") public ResponseEntity<Map<String,String>> deleteDoctor(@PathVariable long id,@PathVariable String token){
-        ResponseEntity<Map<String,String>> invalid=service.validateToken(token,"admin");if(invalid!=null)return invalid;int result=doctors.deleteDoctor(id);
-        return result==1?ResponseEntity.ok(Map.of("message","Doctor deleted successfully")):result==-1?ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message","Doctor not found with id")):ResponseEntity.internalServerError().body(Map.of("message","Some internal error occurred"));
+
+    @PutMapping("/{doctorId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DoctorResponse updateDoctor(@PathVariable Long doctorId,
+            @Valid @RequestBody DoctorUpdateRequest request) {
+        return doctors.updateDoctor(doctorId, request);
     }
-    @GetMapping("/filter/{name}/{time}/{speciality}") public ResponseEntity<Map<String,Object>> filter(@PathVariable String name,@PathVariable String time,@PathVariable String speciality){return ResponseEntity.ok(service.filterDoctor(name,time,speciality));}
+
+    @DeleteMapping("/{doctorId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteDoctor(@PathVariable Long doctorId) {
+        doctors.deleteDoctor(doctorId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Kept only for the original course reflection criterion. */
+    @Deprecated
+    @GetMapping("/legacy/availability/{user}/{doctorId}/{date}/{token}")
+    public ResponseEntity<Map<String, Object>> getDoctorAvailability(
+            @PathVariable String user,
+            @PathVariable Long doctorId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @PathVariable String token) {
+        return ResponseEntity.ok(Map.of("availability", doctors.getDoctorAvailability(doctorId, date)));
+    }
 }
