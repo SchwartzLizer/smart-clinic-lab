@@ -6,7 +6,7 @@
 
 **Architecture:** Keep one Spring Boot 3.4.4 modular monolith. HTTP and Thymeleaf/static resources form the web layer, services own authorization-aware business rules, JPA repositories use MySQL, and the prescription repository uses MongoDB. Spring Security creates an authenticated principal from a bearer JWT; controllers accept DTOs only; Flyway owns relational schema changes; the `demo` profile owns idempotent MongoDB seed data.
 
-**Tech stack:** Java 17, Spring Boot 3.4.4, Spring Security, Spring Data JPA, Spring Data MongoDB, Flyway, JJWT 0.12.6, springdoc-openapi 2.9.0, MySQL 8.4, MongoDB 7, Testcontainers, JUnit 5, Mockito, MockMvc, JaCoCo, Maven Wrapper, Docker Compose, ESLint, HTMLHint, Stylelint, GitHub Actions.
+**Tech stack:** Java 17, Spring Boot 3.4.4, Spring Security, Spring Data JPA, Spring Data MongoDB, Flyway, JJWT 0.12.6, springdoc-openapi 2.8.13, MySQL 8.4, MongoDB 7, Testcontainers, JUnit 5, Mockito, MockMvc, JaCoCo, Maven Wrapper, Docker Compose, ESLint, HTMLHint, Stylelint, GitHub Actions.
 
 **Approved design:** `docs/superpowers/specs/2026-08-28-spring-boot-portfolio-design.md`
 
@@ -61,7 +61,7 @@
    - `spring-boot-starter-actuator`
    - `org.flywaydb:flyway-core`
    - `org.flywaydb:flyway-mysql`
-   - `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.0`
+   - `org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13` (2.9.0 is incompatible with Boot 3.4.4 startup)
    - test-scoped `org.testcontainers:junit-jupiter`, `mysql`, and `mongodb`
 4. Add `maven-failsafe-plugin` for `*IT.java` integration tests and `jacoco-maven-plugin` with `prepare-agent`, `report`, and a `verify` check. Start the coverage minimum at `0.00` in this phase so structural migration can proceed; Task 13 raises it to `0.70` after the new behavior tests exist.
 5. Replace literal placeholders in `application.properties` with:

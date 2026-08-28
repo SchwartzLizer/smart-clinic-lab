@@ -157,7 +157,7 @@ Doctor filtering uses query parameters such as `name`, `specialty`, `period`, `p
 
 ### Documentation
 
-- Add `springdoc-openapi-starter-webmvc-ui` `2.9.0`, which supports Spring Boot 3.x.
+- Add `springdoc-openapi-starter-webmvc-ui` `2.8.13`, the compatible Spring Boot 3.4.x line. During implementation, `2.9.0` was rejected because it fails application context startup with Spring Boot 3.4.4's `PathPatternParser`.
 - Document bearer authentication, DTO schemas, filters, pagination, and error responses.
 
 ## Phase 4: Tests and Enforceable CI
