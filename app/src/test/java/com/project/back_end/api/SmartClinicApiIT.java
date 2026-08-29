@@ -70,7 +70,7 @@ class SmartClinicApiIT {
         String patientToken = loginUser("/api/auth/patients/login", patientEmail);
 
         ResponseEntity<JsonNode> filteredDoctors = exchange(HttpMethod.GET,
-                "/api/doctors?name=Portfolio&specialty=General%20Medicine&period=AM&page=0&size=10", null, null);
+                "/api/doctors?name=Portfolio&specialty=General Medicine&period=AM&page=0&size=10", null, null);
         assertThat(filteredDoctors.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(filteredDoctors.getBody().path("content").findValuesAsText("id"))
                 .contains(String.valueOf(doctorId));
@@ -88,7 +88,8 @@ class SmartClinicApiIT {
                 "/api/appointments/" + appointmentId, patientToken,
                 Map.of("appointmentTime", updatedSlot.toString()));
         assertThat(updatedAppointment.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(updatedAppointment.getBody().path("appointmentTime").asText()).isEqualTo(updatedSlot.toString());
+        assertThat(LocalDateTime.parse(updatedAppointment.getBody().path("appointmentTime").asText()))
+                .isEqualTo(updatedSlot);
 
         ResponseEntity<JsonNode> profile = exchange(HttpMethod.GET, "/api/patients/me", patientToken, null);
         assertThat(profile.getStatusCode()).isEqualTo(HttpStatus.OK);
