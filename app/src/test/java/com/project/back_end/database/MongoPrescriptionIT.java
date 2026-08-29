@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -25,7 +28,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         "jwt.expiration=1h"
 })
 @EnableConfigurationProperties(JwtProperties.class)
+@ContextConfiguration(classes = MongoPrescriptionIT.MongoTestConfiguration.class)
 class MongoPrescriptionIT {
+
+    @TestConfiguration(proxyBeanMethods = false)
+    @EnableMongoRepositories(basePackageClasses = PrescriptionRepository.class)
+    static class MongoTestConfiguration {
+    }
 
     @Container
     static final MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
