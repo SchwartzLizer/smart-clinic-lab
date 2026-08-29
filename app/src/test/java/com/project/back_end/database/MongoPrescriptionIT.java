@@ -7,10 +7,12 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import com.project.back_end.models.Prescription;
+import com.project.back_end.config.properties.JwtProperties;
 import com.project.back_end.repo.PrescriptionRepository;
 
 import org.testcontainers.containers.MongoDBContainer;
@@ -18,7 +20,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-@DataMongoTest
+@DataMongoTest(properties = {
+        "jwt.secret=test-signing-key-that-is-at-least-32-bytes-long",
+        "jwt.expiration=1h"
+})
+@EnableConfigurationProperties(JwtProperties.class)
 class MongoPrescriptionIT {
 
     @Container
