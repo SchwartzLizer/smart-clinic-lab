@@ -30,7 +30,9 @@ class MySqlMigrationIT {
                 .load();
 
         flyway.migrate();
-        assertThat(flyway.info().applied()).hasSize(3);
+        assertThat(flyway.info().applied())
+                .extracting(info -> info.getVersion().getVersion())
+                .containsExactlyInAnyOrder("1", "2", "3", "4");
 
         try (Connection connection = DriverManager.getConnection(
                 mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
