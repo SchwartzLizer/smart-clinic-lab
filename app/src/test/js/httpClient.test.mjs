@@ -4,7 +4,7 @@ import { apiFetch } from "../../main/resources/static/js/services/httpClient.js"
 
 function installBrowserStubs(token = null) {
   const values = new Map(token ? [["token", token]] : []);
-  globalThis.localStorage = {
+  globalThis.sessionStorage = {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
     removeItem: (key) => values.delete(key),

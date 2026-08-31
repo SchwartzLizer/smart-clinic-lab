@@ -17,8 +17,8 @@ const loggedPatientDashboardSource = await readFile(
 );
 
 test("header markup applies the bounded logo image and title styles", () => {
-  assert.match(headerSource, /class="logo-img"/);
-  assert.match(headerSource, /class="logo-title"/);
+  assert.match(headerSource, /className="logo-img"/);
+  assert.match(headerSource, /className="logo-title"/);
 });
 
 test("patient doctor search and filters share one responsive toolbar", () => {

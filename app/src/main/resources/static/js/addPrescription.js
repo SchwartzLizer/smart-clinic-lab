@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (heading) {
     if (mode === "view") {
-      heading.innerHTML = `View <span>Prescription</span>`;
+      heading.textContent = "View Prescription";
     } else {
-      heading.innerHTML = `Add <span>Prescription</span>`;
+      heading.textContent = "Add Prescription";
     }
   }
 
@@ -53,8 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     medicinesInput.disabled = true;
     dosageInput.disabled = true;
     notesInput.disabled = true;
-    savePrescriptionBtn.style.display = "none";  // Hide the save button
+    savePrescriptionBtn.classList.add("is-hidden");
   }
+  document.getElementById("cancelPrescription")?.addEventListener("click", () => selectRole("doctor"));
   // Save prescription on button click
   savePrescriptionBtn.addEventListener('click', async (e) => {
     e.preventDefault();

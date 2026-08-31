@@ -2,7 +2,7 @@
 
 function selectRole(role) {
   setRole(role);
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (role === "admin") {
     if (token) window.location.href = "/adminDashboard";
   } if (role === "patient") {
@@ -22,4 +22,8 @@ function renderContent() {
     window.location.href = "/"; // if no role, send to role selection page
     return;
   }
+}
+
+if (document.body?.dataset.requireRole === "true") {
+  document.addEventListener("DOMContentLoaded", renderContent);
 }

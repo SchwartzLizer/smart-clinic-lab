@@ -4,6 +4,9 @@ import { getDoctors } from "./services/doctorServices.js";
 document.addEventListener("DOMContentLoaded", initializePage);
 
 async function initializePage() {
+  document.getElementById("cancelUpdate")?.addEventListener("click", () => {
+    window.location.href = "/pages/patientAppointments.html";
+  });
   // Get appointmentId and patientId from the URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const appointmentId = urlParams.get("appointmentId");

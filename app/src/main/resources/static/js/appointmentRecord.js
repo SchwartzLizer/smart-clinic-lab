@@ -5,11 +5,21 @@ import { getAppointmentRecord } from "./services/appointmentRecordService.js";
 const tableBody = document.getElementById("patientTableBody");
 const filterSelect = document.getElementById("appointmentFilter");
 
+function emptyRow(message) {
+  const row = document.createElement("tr");
+  const cell = document.createElement("td");
+  cell.className = "noPatientRecord";
+  cell.colSpan = 5;
+  cell.textContent = message;
+  row.append(cell);
+  return row;
+}
+
 async function loadAppointments(filter = "upcoming") {
   const appointments = await getAppointmentRecord();
 
   if (!appointments || appointments.length === 0) {
-    tableBody.innerHTML = `<tr><td class="noPatientRecord" colspan='5'>No appointments found.</td></tr>`;
+    tableBody.replaceChildren(emptyRow("No appointments found."));
     return;
   }
 
@@ -23,11 +33,11 @@ async function loadAppointments(filter = "upcoming") {
   }
 
   if (filteredAppointments.length === 0) {
-    tableBody.innerHTML = `<tr><td class="noPatientRecord" colspan='5'>No ${filter} appointments found.</td></tr>`;
+    tableBody.replaceChildren(emptyRow(`No ${filter} appointments found.`));
     return;
   }
 
-  tableBody.innerHTML = "";
+  tableBody.replaceChildren();
   filteredAppointments.forEach(appointment => {
     const row = getAppointments(appointment);
     tableBody.appendChild(row);

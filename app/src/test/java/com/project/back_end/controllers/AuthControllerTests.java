@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.project.back_end.config.SecurityConfig;
+import com.project.back_end.config.ClinicTimeConfig;
 import com.project.back_end.config.properties.JwtProperties;
 import com.project.back_end.models.Admin;
 import com.project.back_end.models.Doctor;
@@ -33,7 +34,8 @@ import com.project.back_end.services.TokenService;
 
 @WebMvcTest(controllers = AuthController.class, properties = "app.demo-data.enabled=false")
 @EnableConfigurationProperties(JwtProperties.class)
-@Import({ SecurityConfig.class, AuthService.class, TokenService.class,
+@Import({ SecurityConfig.class, ClinicTimeConfig.class, AuthService.class, TokenService.class,
+        com.project.back_end.services.AuthRateLimiter.class,
         RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class })
 class AuthControllerTests {
 
@@ -102,6 +104,24 @@ class AuthControllerTests {
                         + "\"password\":\"secret\",\"phone\":\"0812345678\",\"address\":\"Bangkok\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.password").doesNotExist());
+    }
+
+    @Test
+    void loginLimitReturnsGenericProblemRetryAfterAndDoesNotLeakAccountState() throws Exception {
+        for (int attempt = 0; attempt < 5; attempt++) {
+            mvc.perform(post("/api/auth/patients/login")
+                    .contentType("application/json")
+                    .content("{\"email\":\"limited@example.com\",\"password\":\"wrong\"}"))
+                    .andExpect(status().isUnauthorized());
+        }
+        mvc.perform(post("/api/auth/patients/login")
+                .contentType("application/json")
+                .content("{\"email\":\"limited@example.com\",\"password\":\"wrong\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().exists("Retry-After"))
+                .andExpect(jsonPath("$.detail").value("Too many requests"))
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
 }

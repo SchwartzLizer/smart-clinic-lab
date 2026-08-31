@@ -1,13 +1,13 @@
 // util.js
   function setRole(role) {
-    localStorage.setItem("userRole", role);
+    sessionStorage.setItem("userRole", role);
   }
   
   function getRole() {
-    return localStorage.getItem("userRole");
+    return sessionStorage.getItem("userRole");
   }
   
   function clearRole() {
-    localStorage.removeItem("userRole");
+    sessionStorage.removeItem("userRole");
   }
   

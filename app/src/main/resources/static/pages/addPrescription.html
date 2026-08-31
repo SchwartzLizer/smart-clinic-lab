@@ -18,7 +18,7 @@
 
 </head>
 
-<body onload="renderContent()">
+<body data-require-role="true">
     <div class="container">
         <div class="wrapper">
             <div id="header"></div>
@@ -41,7 +41,7 @@
                             placeholder="Any precautions or observations (optional)"></textarea>
 
                         <button type="submit" class="btn-primary" id="savePrescription">Add Prescription</button>
-                        <button type="button" onclick="selectRole('doctor')" class="btn-secondary">Cancel</button>
+                        <button type="button" id="cancelPrescription" class="btn-secondary">Cancel</button>
                     </form>
                 </div>
             </div>

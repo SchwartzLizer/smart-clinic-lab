@@ -2,6 +2,7 @@ package com.project.back_end.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +50,7 @@ class PrescriptionServiceTests {
         appointment.setDoctor(doctor);
         appointment.setPatient(patient);
         appointment.setAppointmentTime(LocalDateTime.of(2030, 1, 10, 9, 0));
+        org.mockito.Mockito.lenient().when(appointments.updateStatus(1, 50L)).thenReturn(1);
     }
 
     @Test
@@ -64,16 +66,64 @@ class PrescriptionServiceTests {
         var response = service.createPrescription(new AuthenticatedUser(7L, "doctor@example.com", Role.DOCTOR),
                 new PrescriptionCreateRequest("Patient One", 50L, "Amoxicillin", "500mg", "Take twice daily"));
 
-        assertEquals("rx-1", response.id());
+        assertEquals("rx-1", response.response().id());
+        assertEquals(org.springframework.http.HttpStatus.CREATED, response.status());
         verify(appointments).updateStatus(1, 50L);
     }
 
     @Test
-    void duplicatePrescriptionIsConflict() {
+    void identicalPrescriptionRetryRepairsAppointmentAndReturnsOk() {
         when(appointments.findById(50L)).thenReturn(Optional.of(appointment));
-        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of(new Prescription()));
+        Prescription existing = new Prescription("Patient One", 50L, "Amoxicillin", "500mg", "");
+        existing.setId("rx-1");
+        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of(existing));
+
+        var response = service.createPrescription(new AuthenticatedUser(7L, "doctor@example.com", Role.DOCTOR),
+                new PrescriptionCreateRequest("Patient One", 50L, "Amoxicillin", "500mg", null));
+
+        assertEquals(org.springframework.http.HttpStatus.OK, response.status());
+        assertEquals("rx-1", response.response().id());
+        verify(appointments).updateStatus(1, 50L);
+        verify(prescriptions, never()).save(any(Prescription.class));
+    }
+
+    @Test
+    void differentPrescriptionRetryIsConflictWithoutCompletingAppointment() {
+        when(appointments.findById(50L)).thenReturn(Optional.of(appointment));
+        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of(
+                new Prescription("Patient One", 50L, "Amoxicillin", "500mg", null)));
 
         assertThrows(com.project.back_end.exceptions.ResourceConflictException.class,
+                () -> service.createPrescription(new AuthenticatedUser(7L, "doctor@example.com", Role.DOCTOR),
+                        new PrescriptionCreateRequest("Patient One", 50L, "Other medication", "500mg", null)));
+        verify(appointments, never()).updateStatus(1, 50L);
+    }
+
+    @Test
+    void duplicateKeyRaceReturnsExistingIdenticalPrescription() {
+        when(appointments.findById(50L)).thenReturn(Optional.of(appointment));
+        Prescription existing = new Prescription("Patient One", 50L, "Amoxicillin", "500mg", null);
+        existing.setId("rx-1");
+        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of(), List.of(existing));
+        when(prescriptions.save(any(Prescription.class)))
+                .thenThrow(new org.springframework.dao.DuplicateKeyException("duplicate"));
+
+        var response = service.createPrescription(new AuthenticatedUser(7L, "doctor@example.com", Role.DOCTOR),
+                new PrescriptionCreateRequest("Patient One", 50L, "Amoxicillin", "500mg", ""));
+
+        assertEquals(org.springframework.http.HttpStatus.OK, response.status());
+        assertEquals("rx-1", response.response().id());
+        verify(appointments).updateStatus(1, 50L);
+    }
+
+    @Test
+    void zeroRowCompletionUpdateDoesNotReportPrescriptionSuccess() {
+        when(appointments.findById(50L)).thenReturn(Optional.of(appointment));
+        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of());
+        when(prescriptions.save(any(Prescription.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(appointments.updateStatus(1, 50L)).thenReturn(0);
+
+        assertThrows(IllegalStateException.class,
                 () -> service.createPrescription(new AuthenticatedUser(7L, "doctor@example.com", Role.DOCTOR),
                         new PrescriptionCreateRequest("Patient One", 50L, "Amoxicillin", "500mg", null)));
     }
@@ -84,6 +134,7 @@ class PrescriptionServiceTests {
         assertThrows(com.project.back_end.exceptions.ForbiddenOperationException.class,
                 () -> service.createPrescription(new AuthenticatedUser(8L, "other@example.com", Role.DOCTOR),
                         new PrescriptionCreateRequest("Patient One", 50L, "Amoxicillin", "500mg", null)));
+        verify(prescriptions, never()).findByAppointmentId(50L);
     }
 
     @Test

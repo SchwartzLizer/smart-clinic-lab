@@ -25,15 +25,16 @@ async function initializePage() {
 }
 
 function renderAppointments(appointments) {
-  tableBody.innerHTML = "";
-
-  const actionTh = document.querySelector("#patientTable thead tr th:last-child");
-  if (actionTh) {
-    actionTh.style.display = "table-cell"; // Always show "Actions" column
-  }
+  tableBody.replaceChildren();
 
   if (!appointments.length) {
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No Appointments Found</td></tr>`;
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "empty-table-cell";
+    cell.textContent = "No Appointments Found";
+    row.append(cell);
+    tableBody.appendChild(row);
     return;
   }
 

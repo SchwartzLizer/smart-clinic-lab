@@ -13,7 +13,7 @@ function loadDoctorCards() {
   getDoctors()
     .then(doctors => {
       const contentDiv = document.getElementById("content");
-      contentDiv.innerHTML = "";
+      contentDiv.replaceChildren();
 
       doctors.forEach(doctor => {
         const card = createDoctorCard(doctor);
@@ -32,8 +32,6 @@ export function showBookingOverlay(e, doctor, patient) {
   console.log(patient)
   const ripple = document.createElement("div");
   ripple.classList.add("ripple-overlay");
-  ripple.style.left = `${e.clientX}px`;
-  ripple.style.top = `${e.clientY}px`;
   document.body.appendChild(ripple);
 
   setTimeout(() => ripple.classList.add("active"), 50);
@@ -41,25 +39,44 @@ export function showBookingOverlay(e, doctor, patient) {
   const modalApp = document.createElement("div");
   modalApp.classList.add("modalApp");
 
-  modalApp.innerHTML = `
-    <h2>Book Appointment</h2>
-    <input class="input-field" type="text" value="${patient.name}" disabled />
-    <input class="input-field" type="text" value="${doctor.name}" disabled />
-    <input class="input-field" type="text" value="${doctor.specialty}" disabled/>
-    <input class="input-field" type="email" value="${doctor.email}" disabled/>
-    <input class="input-field" type="date" id="appointment-date" />
-    <select class="input-field" id="appointment-time">
-      <option value="">Select time</option>
-      ${doctor.availableTimes.map(t => `<option value="${t}">${t}</option>`).join('')}
-    </select>
-    <button class="confirm-booking">Confirm Booking</button>
-  `;
+  const heading = document.createElement("h2");
+  heading.textContent = "Book Appointment";
+  const details = [patient.name, doctor.name, doctor.specialty, doctor.email].map((value) => {
+    const input = document.createElement("input");
+    input.className = "input-field";
+    input.type = "text";
+    input.value = value || "";
+    input.disabled = true;
+    return input;
+  });
+  const dateInput = document.createElement("input");
+  dateInput.className = "input-field";
+  dateInput.type = "date";
+  dateInput.id = "appointment-date";
+  const timeSelect = document.createElement("select");
+  timeSelect.className = "input-field";
+  timeSelect.id = "appointment-time";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select time";
+  timeSelect.append(placeholder);
+  for (const time of doctor.availableTimes || []) {
+    const option = document.createElement("option");
+    option.value = time;
+    option.textContent = time;
+    timeSelect.append(option);
+  }
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "confirm-booking";
+  confirm.textContent = "Confirm Booking";
+  modalApp.append(heading, ...details, dateInput, timeSelect, confirm);
 
   document.body.appendChild(modalApp);
 
   setTimeout(() => modalApp.classList.add("active"), 600);
 
-  modalApp.querySelector(".confirm-booking").addEventListener("click", async () => {
+  confirm.addEventListener("click", async () => {
     const date = modalApp.querySelector("#appointment-date").value;
     const time = modalApp.querySelector("#appointment-time").value;
     const startTime = time.split('-')[0];
@@ -106,7 +123,7 @@ function filterDoctorsOnChange() {
     .then(response => {
       const doctors = response.doctors;
       const contentDiv = document.getElementById("content");
-      contentDiv.innerHTML = "";
+      contentDiv.replaceChildren();
 
       if (doctors.length > 0) {
         console.log(doctors);
@@ -115,7 +132,9 @@ function filterDoctorsOnChange() {
           contentDiv.appendChild(card);
         });
       } else {
-        contentDiv.innerHTML = "<p>No doctors found with the given filters.</p>";
+        const empty = document.createElement("p");
+        empty.textContent = "No doctors found with the given filters.";
+        contentDiv.replaceChildren(empty);
         console.log("Nothing");
       }
     })
@@ -127,7 +146,7 @@ function filterDoctorsOnChange() {
 
 export function renderDoctorCards(doctors) {
   const contentDiv = document.getElementById("content");
-  contentDiv.innerHTML = "";
+  contentDiv.replaceChildren();
 
   doctors.forEach(doctor => {
     const card = createDoctorCard(doctor);

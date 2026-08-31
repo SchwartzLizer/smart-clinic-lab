@@ -18,7 +18,7 @@ Clinics need one workflow for finding doctors, booking visits, and recording pre
 - Flyway-managed MySQL schema, procedures, and safe local demo data.
 - MongoDB prescription documents linked to MySQL appointments.
 - Paginated/filterable doctor directory.
-- OpenAPI 3 contract at `/v3/api-docs` and Swagger UI at `/swagger-ui.html`.
+- OpenAPI 3 contract and Swagger UI for local/demo use; both are disabled in the cloud profile.
 - Actuator health, liveness, readiness, and correlation IDs.
 - Unit, MVC, Testcontainers integration, JavaScript, HTML, CSS, Checkstyle, and Hadolint checks.
 
@@ -86,7 +86,7 @@ Use a clean local volume when repeating the demo. Do not use these credentials f
 2. Create a doctor with AM/PM availability.
 3. Open the Patient portal, register/sign in, filter the doctor directory, and book a future slot.
 4. Sign in to the Doctor portal, view the assigned appointment, and create a prescription.
-5. Use Swagger UI to inspect the same bearer-authenticated contract.
+5. Use Swagger UI locally to inspect the same bearer-authenticated contract. It is disabled in the cloud profile.
 
 ## API contract
 
@@ -113,14 +113,14 @@ npm run verify:frontend       # ESLint, HTMLHint, Stylelint, node:test
 docker build --file app/Dockerfile --tag smart-clinic:local app
 ```
 
-Public runtime endpoints:
+Local/demo runtime endpoints:
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - Liveness: `http://localhost:8080/actuator/health/liveness`
 - Readiness: `http://localhost:8080/actuator/health/readiness`
 
-The latest Java 17 clean verification passed 71 unit/MVC tests and 3 Testcontainers integration tests: `SmartClinicApiIT`, `MongoPrescriptionIT`, and `MySqlMigrationIT`.
+Latest verified checks: Java unit/MVC suite 93/93; frontend lint/tests 8/8; `MongoPrescriptionIT` 3/3; `MySqlMigrationIT` 2/2; and `PrescriptionCrossStoreIT` 4/4. `SmartClinicApiIT` was not completed on this Windows/JDK host because its Testcontainers application process could not bind its loopback listener (ENV-001); it is not reported as passing.
 
 ## Security decisions and trade-offs
 
@@ -128,12 +128,12 @@ The latest Java 17 clean verification passed 71 unit/MVC tests and 3 Testcontain
 - JWTs carry account ID, subject, role, issued-at, and expiry; the signing secret is environment-backed and must be at least 32 UTF-8 bytes.
 - Sessions, form login, and HTTP Basic are disabled for the API; the filter chain is stateless.
 - Ownership is rechecked against persisted appointment relationships for every patient/doctor operation.
-- Prescriptions live in MongoDB while appointments/status live in MySQL. There is no cross-database atomic transaction; duplicate appointment IDs make retries safe and the service documents the write order.
+- Prescriptions live in MongoDB while appointments/status live in MySQL. There is no cross-database atomic transaction: creation writes MongoDB first and then completes the appointment. A new request returns `201`; an identical retry returns `200` and repairs a missing completion update; reuse of an appointment ID with different prescription content returns `409`.
 - Legacy controller mappings have been removed. The frontend and protected API calls use bearer headers; tokens are never accepted in URLs.
 
 ## Free deployment
 
-The intended zero-cost topology is Render Free (Docker web service) + Aiven Free MySQL + MongoDB Atlas M0. Provider accounts, network allowlists, and secret entry remain user-controlled. See [`render.yaml`](render.yaml) and [`docs/deployment/free-tier-runbook.md`](docs/deployment/free-tier-runbook.md) for the setup sequence and limitations.
+The intended zero-cost topology is Render Free (Docker web service) + Aiven Free MySQL + MongoDB Atlas M0. The `cloud` profile requires separate runtime and Flyway database identities, plus cloud-only environment values validated at startup. Provider accounts, network allowlists, secret entry, deployment, and identity bootstrap remain user-controlled and were not performed in this repository run. See [`render.yaml`](render.yaml) and [`docs/deployment/free-tier-runbook.md`](docs/deployment/free-tier-runbook.md) for the setup sequence and limitations.
 
 Free tiers can sleep, cold-start, have small storage/connection limits, and are not a production SLA. No healthcare-compliance claim is made, and only synthetic demo data belongs here.
 

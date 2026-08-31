@@ -31,7 +31,7 @@ function loadDoctorCards() {
   getDoctors()
     .then(doctors => {
       const contentDiv = document.getElementById("content");
-      contentDiv.innerHTML = "";
+      contentDiv.replaceChildren();
 
       doctors.forEach(doctor => {
         const card = createDoctorCard(doctor);
@@ -63,7 +63,7 @@ function filterDoctorsOnChange() {
     .then(response => {
       const doctors = response.doctors;
       const contentDiv = document.getElementById("content");
-      contentDiv.innerHTML = "";
+      contentDiv.replaceChildren();
 
       if (doctors.length > 0) {
         console.log(doctors);
@@ -72,7 +72,9 @@ function filterDoctorsOnChange() {
           contentDiv.appendChild(card);
         });
       } else {
-        contentDiv.innerHTML = "<p>No doctors found with the given filters.</p>";
+        const empty = document.createElement("p");
+        empty.textContent = "No doctors found with the given filters.";
+        contentDiv.replaceChildren(empty);
         console.log("Nothing");
       }
     })
@@ -94,7 +96,7 @@ window.signupPatient = async function () {
     const { success, message } = await patientSignup(data);
     if (success) {
       alert(message);
-      document.getElementById("modal").style.display = "none";
+      document.getElementById("modal").classList.remove("is-open");
       window.location.reload();
     }
     else alert(message);
@@ -116,9 +118,9 @@ window.loginPatient = async function () {
     const response = await patientLogin(data);
     if (response.ok) {
       const result = await response.json();
-      localStorage.setItem('token', result.token)
-      localStorage.setItem('accountId', result.accountId)
-      localStorage.setItem('userRole', 'loggedPatient')
+      sessionStorage.setItem('token', result.token)
+      sessionStorage.setItem('accountId', result.accountId)
+      sessionStorage.setItem('userRole', 'loggedPatient')
       window.location.href = '/pages/loggedPatientDashboard.html';
     } else {
       alert('❌ Invalid credentials!');

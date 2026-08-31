@@ -1,6 +1,5 @@
 package com.project.back_end.controllers;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import com.project.back_end.DTO.prescription.PrescriptionCreateRequest;
 import com.project.back_end.DTO.prescription.PrescriptionResponse;
 import com.project.back_end.security.AuthenticatedUser;
 import com.project.back_end.services.PrescriptionService;
+import com.project.back_end.services.PrescriptionCreationResult;
 
 import jakarta.validation.Valid;
 
@@ -32,7 +32,8 @@ public class PrescriptionController {
     public ResponseEntity<PrescriptionResponse> createPrescription(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @Valid @RequestBody PrescriptionCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(prescriptions.createPrescription(principal, request));
+        PrescriptionCreationResult result = prescriptions.createPrescription(principal, request);
+        return ResponseEntity.status(result.status()).body(result.response());
     }
 
     @GetMapping("/{appointmentId}")

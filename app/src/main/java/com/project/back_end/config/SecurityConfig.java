@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 import com.project.back_end.security.JwtAuthenticationFilter;
 import com.project.back_end.security.RestAccessDeniedHandler;
@@ -33,6 +34,14 @@ public class SecurityConfig {
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
+                .headers(headers -> headers
+                        .contentSecurityPolicy(policy -> policy.policyDirectives(
+                                "default-src 'self'; script-src 'self'; style-src 'self'; "
+                                        + "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+                                        + "base-uri 'self'; form-action 'self'; frame-ancestors 'none'"))
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER))
+                        .permissionsPolicyHeader(permissions -> permissions.policy("geolocation=(), microphone=(), camera=()")))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)

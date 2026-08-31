@@ -53,6 +53,17 @@ class GlobalExceptionHandlerTests {
                 .get("email"));
     }
 
+    @Test
+    void rateLimitReturnsGenericProblemAndRetryAfterHeader() {
+        var response = handler.handle(new com.project.back_end.services.RateLimitExceededException(42),
+                request("/api/auth/patients/login"));
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertEquals("42", response.getHeaders().getFirst("Retry-After"));
+        assertProblem(response.getBody(), 429, "Too Many Requests", "/api/auth/patients/login");
+        assertEquals("Too many requests", response.getBody().getDetail());
+    }
+
     @SuppressWarnings("unused")
     private void sample(String value) {
     }

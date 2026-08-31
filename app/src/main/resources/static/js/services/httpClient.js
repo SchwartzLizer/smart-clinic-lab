@@ -1,7 +1,7 @@
 const SESSION_KEYS = ["token", "userRole", "accountId", "doctorId"];
 
 function storage() {
-  return globalThis.localStorage;
+  return globalThis.sessionStorage;
 }
 
 function clearSession() {

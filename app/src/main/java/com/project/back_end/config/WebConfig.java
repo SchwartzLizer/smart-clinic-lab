@@ -1,21 +1,30 @@
 package com.project.back_end.config;
 
-
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.NonNull; 
-
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.project.back_end.config.properties.CorsProperties;
+
 @Configuration
+@EnableConfigurationProperties(CorsProperties.class)
 public class WebConfig implements WebMvcConfigurer {
+
+    private final CorsProperties corsProperties;
+
+    public WebConfig(CorsProperties corsProperties) {
+        this.corsProperties = corsProperties;
+    }
 
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
-        // Allow CORS for all endpoints
-        registry.addMapping("/**")
-                .allowedOrigins("*")  // Add your frontend URL here
-                .allowedMethods("GET", "POST", "PUT", "DELETE")  // Specify allowed methods
-                .allowedHeaders("*");  // You can restrict headers if needed
+        var mapping = registry.addMapping("/api/**")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .maxAge(3600);
+        var origins = corsProperties.exactOrigins();
+        mapping.allowedOrigins(origins.toArray(String[]::new));
     }
 }

@@ -1,6 +1,11 @@
 function renderHeader(){
-  const target=document.getElementById("header");if(!target)return;const role=localStorage.getItem("userRole");
-  target.innerHTML=`<header class="header"><a class="logo-link" href="/"><img class="logo-img" src="/assets/images/logo/logo.png" alt="Smart Clinic"><strong class="logo-title">Smart Clinic</strong></a><nav><span class="role-label">${role?role.replace("loggedPatient","Patient"):"Clinic portal"}</span>${role?'<button id="logoutBtn" class="text-btn">Log out</button>':""}</nav></header>`;
-  document.getElementById("logoutBtn")?.addEventListener("click",()=>{localStorage.clear();location.href="/";});
+  const target=document.getElementById("header");if(!target)return;const role=sessionStorage.getItem("userRole");
+  const header=document.createElement("header");header.className="header";
+  const link=document.createElement("a");link.className="logo-link";link.href="/";
+  const image=document.createElement("img");image.className="logo-img";image.src="/assets/images/logo/logo.png";image.alt="Smart Clinic";
+  const title=document.createElement("strong");title.className="logo-title";title.textContent="Smart Clinic";link.append(image,title);
+  const nav=document.createElement("nav");const label=document.createElement("span");label.className="role-label";label.textContent=role?role.replace("loggedPatient","Patient"):"Clinic portal";nav.append(label);
+  if(role){const logout=document.createElement("button");logout.id="logoutBtn";logout.className="text-btn";logout.type="button";logout.textContent="Log out";logout.addEventListener("click",()=>{sessionStorage.clear();location.href="/";});nav.append(logout);}
+  header.append(link,nav);target.replaceChildren(header);
 }
 document.readyState==="loading"?document.addEventListener("DOMContentLoaded",renderHeader):renderHeader();

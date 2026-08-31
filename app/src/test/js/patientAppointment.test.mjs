@@ -1,14 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const tableBody = {
-  children: [],
-  innerHTML: "",
-  appendChild(row) {
-    this.children.push(row);
-  },
-};
-const actionHeader = { style: {} };
+function node(tagName = "div") {
+  return {
+    tagName,
+    children: [],
+    textContent: "",
+    className: "",
+    append(...children) { this.children.push(...children); },
+    appendChild(child) { this.children.push(child); },
+    replaceChildren(...children) { this.children = children; },
+    addEventListener() {},
+  };
+}
+
+const tableBody = node("tbody");
 const searchBar = { addEventListener() {}, value: "" };
 const appointmentFilter = { addEventListener() {}, value: "allAppointments" };
 const elements = new Map([
@@ -19,20 +25,8 @@ const elements = new Map([
 
 globalThis.document = {
   addEventListener() {},
-  createElement() {
-    return {
-      innerHTML: "",
-      querySelector() {
-        return { addEventListener() {} };
-      },
-    };
-  },
-  getElementById(id) {
-    return elements.get(id);
-  },
-  querySelector() {
-    return actionHeader;
-  },
+  createElement: node,
+  getElementById(id) { return elements.get(id); },
 };
 globalThis.window = { location: { href: "" } };
 
@@ -50,17 +44,14 @@ const appointment = {
   status: 0,
 };
 
-test("renders AppointmentResponse time and builds update query from contract fields", () => {
-  tableBody.children = [];
-  tableBody.innerHTML = "";
-
+test("renders AppointmentResponse values as safe text nodes and builds update query", () => {
   renderAppointments([appointment]);
 
   assert.equal(tableBody.children.length, 1);
-  const renderedRow = tableBody.children[0].innerHTML;
-  assert.match(renderedRow, /<td>2030-01-10<\/td>/);
-  assert.match(renderedRow, /<td>09:00:00<\/td>/);
-  assert.doesNotMatch(renderedRow, /undefined/);
+  const cells = tableBody.children[0].children;
+  assert.equal(cells[2].textContent, "2030-01-10");
+  assert.equal(cells[3].textContent, "09:00:00");
+  assert.equal(cells.some((cell) => cell.textContent === "undefined"), false);
 
   assert.deepEqual(splitAppointmentTime(appointment.appointmentTime), {
     appointmentDate: "2030-01-10",

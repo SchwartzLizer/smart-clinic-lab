@@ -200,6 +200,18 @@
     height: 100%;
     background-color: rgba(0,0,0,0.6);
   }
+
+  .modal.is-open {
+    display: block;
+  }
+
+  .empty-table-cell {
+    text-align: center;
+  }
+
+  .is-hidden {
+    display: none;
+  }
   
   .modal-content {
     background-color: white;

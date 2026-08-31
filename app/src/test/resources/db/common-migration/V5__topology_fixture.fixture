@@ -1,0 +1,1 @@
+Test-scope fixture only. It intentionally has no .sql suffix so Flyway never executes it.

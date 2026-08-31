@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.project.back_end.DTO.appointment.AppointmentResponse;
 import com.project.back_end.config.SecurityConfig;
+import com.project.back_end.config.ClinicTimeConfig;
 import com.project.back_end.config.properties.JwtProperties;
 import com.project.back_end.mappers.AppointmentMapper;
 import com.project.back_end.repo.AdminRepository;
@@ -39,7 +40,7 @@ import com.project.back_end.models.Patient;
 
 @WebMvcTest(controllers = AppointmentController.class, properties = "app.demo-data.enabled=false")
 @EnableConfigurationProperties(JwtProperties.class)
-@Import({SecurityConfig.class, AppointmentService.class, TokenService.class, AppointmentMapper.class,
+@Import({SecurityConfig.class, ClinicTimeConfig.class, AppointmentService.class, TokenService.class, AppointmentMapper.class,
         RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
 class AppointmentControllerTests {
 
