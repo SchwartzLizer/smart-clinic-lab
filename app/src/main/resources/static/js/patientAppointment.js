@@ -2,8 +2,6 @@
 import { getPatientAppointments, getPatientData, filterAppointments } from "./services/patientServices.js";
 
 const tableBody = document.getElementById("patientTableBody");
-const token = localStorage.getItem("token");
-
 let allAppointments = [];
 let filteredAppointments = [];
 let patientId = null;
@@ -12,15 +10,13 @@ document.addEventListener("DOMContentLoaded", initializePage);
 
 async function initializePage() {
   try {
-    if (!token) throw new Error("No token found");
-
-    const patient = await getPatientData(token);
+    const patient = await getPatientData();
     if (!patient) throw new Error("Failed to fetch patient details");
 
     patientId = Number(patient.id);
 
-    const appointmentData = await getPatientAppointments(patientId, token, "patient") || [];
-    allAppointments = appointmentData.filter(app => app.patientId === patientId);
+    const appointmentData = await getPatientAppointments() || [];
+    allAppointments = appointmentData;
 
     renderAppointments(allAppointments);
   } catch (error) {
@@ -29,7 +25,12 @@ async function initializePage() {
   }
 }
 
-function renderAppointments(appointments) {
+export function splitAppointmentTime(appointmentTime) {
+  const [appointmentDate, appointmentTimeOnly] = appointmentTime.split("T");
+  return { appointmentDate, appointmentTimeOnly };
+}
+
+export function renderAppointments(appointments) {
   tableBody.innerHTML = "";
 
   const actionTh = document.querySelector("#patientTable thead tr th:last-child");
@@ -43,13 +44,14 @@ function renderAppointments(appointments) {
   }
 
   appointments.forEach(appointment => {
+    const { appointmentDate, appointmentTimeOnly } = splitAppointmentTime(appointment.appointmentTime);
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${appointment.patientName || "You"}</td>
-      <td>${appointment.doctorName}</td>
-      <td>${appointment.appointmentDate}</td>
-      <td>${appointment.appointmentTimeOnly}</td>
-      <td>${appointment.status == 0 ? `<img src="../assets/images/edit/edit.png" alt="Edit" class="prescription-btn" data-id="${appointment.patientId}">` : "-"}</td>
+      <td>${appointment.patient?.name || "You"}</td>
+      <td>${appointment.doctor?.name || ""}</td>
+      <td>${appointmentDate}</td>
+      <td>${appointmentTimeOnly}</td>
+      <td>${appointment.status == 0 ? `<img src="../assets/images/edit/edit.png" alt="Edit" class="prescription-btn" data-id="${appointment.id}">` : "-"}</td>
     `;
 
     if (appointment.status == 0) {
@@ -61,18 +63,21 @@ function renderAppointments(appointments) {
   });
 }
 
-function redirectToUpdatePage(appointment) {
-  // Prepare the query parameters
-  const queryString = new URLSearchParams({
+export function buildUpdateAppointmentQuery(appointment) {
+  const { appointmentDate, appointmentTimeOnly } = splitAppointmentTime(appointment.appointmentTime);
+  return new URLSearchParams({
     appointmentId: appointment.id,
-    patientId: appointment.patientId,
-    patientName: appointment.patientName || "You",
-    doctorName: appointment.doctorName,
-    doctorId: appointment.doctorId,
-    appointmentDate: appointment.appointmentDate,
-    appointmentTime: appointment.appointmentTimeOnly,
+    patientId: appointment.patient?.id,
+    patientName: appointment.patient?.name || "You",
+    doctorName: appointment.doctor?.name || "",
+    doctorId: appointment.doctor?.id,
+    appointmentDate,
+    appointmentTime: appointmentTimeOnly,
   }).toString();
+}
 
+function redirectToUpdatePage(appointment) {
+  const queryString = buildUpdateAppointmentQuery(appointment);
   // Redirect to the update page with the query string
   setTimeout(() => {
     window.location.href = `/pages/updateAppointment.html?${queryString}`;
@@ -92,9 +97,9 @@ async function handleFilterChange() {
   const condition = filterValue === "allAppointments" ? null : filterValue || null;
 
   try {
-    const response = await filterAppointments(condition, name, token);
+    const response = await filterAppointments(condition, name);
     const appointments = response?.appointments || [];
-    filteredAppointments = appointments.filter(app => app.patientId === patientId);
+    filteredAppointments = appointments;
 
     renderAppointments(filteredAppointments);
   } catch (error) {

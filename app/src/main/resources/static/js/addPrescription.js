@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const appointmentId = urlParams.get("appointmentId");
   const mode = urlParams.get("mode");
-  const token = localStorage.getItem("token");
   const patientName = urlParams.get("patientName")
 
   if (heading) {
@@ -30,15 +29,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Fetch and pre-fill existing prescription if it exists
-  if (appointmentId && token) {
+  if (appointmentId) {
     try {
-      const response = await getPrescription(appointmentId, token);
+      const response = await getPrescription(appointmentId);
       console.log("getPrescription :: ", response);
 
       // Now, check if the prescription exists in the response and access it from the array
-      if (response.prescription && response.prescription.length > 0) {
-        const existingPrescription = response.prescription[0]; // Access first prescription object
-        patientNameInput.value = existingPrescription.patientName || YOU;
+      if (response) {
+        const existingPrescription = response;
+        patientNameInput.value = existingPrescription.patientName || "You";
         medicinesInput.value = existingPrescription.medication || "";
         dosageInput.value = existingPrescription.dosage || "";
         notesInput.value = existingPrescription.doctorNotes || "";
@@ -68,11 +67,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       appointmentId
     };
 
-    const { success, message } = await savePrescription(prescription, token);
+    const { success, message } = await savePrescription(prescription);
 
     if (success) {
       alert("✅ Prescription saved successfully.");
-      selectRole('doctor');
+      window.location.href = "/doctorDashboard";
     } else {
       alert("❌ Failed to save prescription. " + message);
     }

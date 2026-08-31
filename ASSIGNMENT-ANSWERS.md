@@ -1,21 +1,21 @@
 # Smart Clinic Final Assignment Answers
 
-Repository: https://github.com/SchwartzLizer/java-database-capstone
+Repository: https://github.com/SchwartzLizer/smart-clinic-lab
 
 ## Public links
 
-1. User stories: https://github.com/SchwartzLizer/java-database-capstone/issues
-2. Schema design: https://github.com/SchwartzLizer/java-database-capstone/blob/main/schema-design.md
-3. Doctor.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/models/Doctor.java
-4. Appointment.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/models/Appointment.java
-5. DoctorController.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/controllers/DoctorController.java
-6. AppointmentService.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/services/AppointmentService.java
-7. PrescriptionController.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/controllers/PrescriptionController.java
-8. PatientRepository.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/repo/PatientRepository.java
-9. TokenService.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/services/TokenService.java
-10. DoctorService.java: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/src/main/java/com/project/back_end/services/DoctorService.java
-11. Dockerfile: https://github.com/SchwartzLizer/java-database-capstone/blob/main/app/Dockerfile
-12. Maven workflow: https://github.com/SchwartzLizer/java-database-capstone/blob/main/.github/workflows/compile-backend.yml
+1. User stories: https://github.com/SchwartzLizer/smart-clinic-lab/issues
+2. Schema design: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/schema-design.md
+3. Doctor.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/models/Doctor.java
+4. Appointment.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/models/Appointment.java
+5. DoctorController.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/controllers/DoctorController.java
+6. AppointmentService.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/services/AppointmentService.java
+7. PrescriptionController.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/controllers/PrescriptionController.java
+8. PatientRepository.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/repo/PatientRepository.java
+9. TokenService.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/services/TokenService.java
+10. DoctorService.java: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/src/main/java/com/project/back_end/services/DoctorService.java
+11. Dockerfile: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/app/Dockerfile
+12. Maven workflow: https://github.com/SchwartzLizer/smart-clinic-lab/blob/main/.github/workflows/compile-backend.yml
 
 ## Screenshot questions
 

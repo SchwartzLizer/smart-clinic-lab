@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    
+    text-decoration: none;
   }
   
   .logo-img {
@@ -33,6 +33,33 @@
     font-size: 20px;
     font-weight: bold;
     color: #333;
+  }
+
+  .header nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .role-label {
+    color: #54706d;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .text-btn {
+    border: 1px solid #167f72;
+    border-radius: 8px;
+    background: transparent;
+    color: #167f72;
+    cursor: pointer;
+    padding: 8px 12px;
+    font: inherit;
+  }
+
+  .text-btn:hover {
+    background: #167f72;
+    color: #fff;
   }
   
   /* Nav links styling */
@@ -308,16 +335,27 @@
     border-radius: 10px;
   }
   
-  span {
+  .doctor-info span {
     color : #A62B1F;
   }
 
-  .searchBar{
-    height: 30px;
-    padding:20px;
+.search-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+}
+
+.searchBar {
+    flex: 1 1 420px;
+    min-width: 220px;
+    max-width: 680px;
+    height: 42px;
+    padding: 0 14px;
     font-size: 16px;
-    margin-bottom: 30px;
-    border: 0.2px solid grey;
+    border: 1px solid #b8c8c5;
+    border-radius: 8px;
 }
 
   .searchBar:focus{
@@ -327,16 +365,16 @@
 }
 
 .filter-wrapper {
-  width: 350px;
+  flex: 0 1 420px;
   display: flex;
-  flex-direction: row;
-  
+  gap: 10px;
 }
 
 .filter-select {
-  margin-right: 8px;
   width: 100%;
-  padding: 8px 12px;
+  min-width: 160px;
+  height: 42px;
+  padding: 0 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
   background-color: #fff;
@@ -352,6 +390,23 @@
   border-color: #015c5d;
   box-shadow: 0 0 5px rgba(1, 92, 93, 0.697);
   outline: none;
+}
+
+@media (max-width: 700px) {
+  .search-filter-toolbar,
+  .filter-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBar,
+  .filter-wrapper,
+  .filter-select {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
 }
 
 .availabilityLabel{

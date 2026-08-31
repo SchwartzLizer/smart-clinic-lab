@@ -1,10 +1,9 @@
 // updateAppointment.js
-import { updateAppointment } from "../js/services/appointmentRecordService.js";
-import { getDoctors } from "../js/services/doctorServices.js";
+import { updateAppointment } from "./services/appointmentRecordService.js";
+import { getDoctors } from "./services/doctorServices.js";
 document.addEventListener("DOMContentLoaded", initializePage);
 
 async function initializePage() {
-  const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
   // Get appointmentId and patientId from the URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const appointmentId = urlParams.get("appointmentId");
@@ -16,7 +15,7 @@ async function initializePage() {
   const appointmentTime = urlParams.get("appointmentTime");
 
   console.log(doctorId)
-  if (!token || !patientId) {
+  if (!appointmentId || !doctorId) {
     alert("Missing session data, redirecting to appointments page.");
     window.location.href = "/pages/patientAppointments.html";
     return;
@@ -66,7 +65,7 @@ async function initializePage() {
           status: 0
         };
 
-        const updateResponse = await updateAppointment(updatedAppointment, token);
+        const updateResponse = await updateAppointment(updatedAppointment);
 
         if (updateResponse.success) {
           alert("Appointment updated successfully!");

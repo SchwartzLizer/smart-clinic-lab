@@ -3,8 +3,6 @@ import { getPatientAppointments } from "./services/patientServices.js";
 import { createPatientRecordRow } from './components/patientRecordRow.js';
 
 const tableBody = document.getElementById("patientTableBody");
-const token = localStorage.getItem("token");
-
 const urlParams = new URLSearchParams(window.location.search);
 const patientId = urlParams.get("id");
 const doctorId = urlParams.get("doctorId");
@@ -13,13 +11,11 @@ document.addEventListener("DOMContentLoaded", initializePage);
 
 async function initializePage() {
   try {
-    if (!token) throw new Error("No token found");
-
-    const appointmentData = await getPatientAppointments(patientId, token, "doctor") || [];
+    const appointmentData = await getPatientAppointments() || [];
 
     // Filter by both patientId and doctorId
     const filteredAppointments = appointmentData.filter(app =>
-      app.doctorId == doctorId);
+      app.doctor?.id == doctorId && app.patient?.id == patientId);
     console.log(filteredAppointments)
     renderAppointments(filteredAppointments);
   } catch (error) {

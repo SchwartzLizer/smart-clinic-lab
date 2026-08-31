@@ -1,62 +1,40 @@
-// appointmentRecordService.js
 import { API_BASE_URL } from "../config/config.js";
-const APPOINTMENT_API = `${API_BASE_URL}/appointments`;
+import { readJson } from "./httpClient.js";
 
+const APPOINTMENTS_API = `${API_BASE_URL}/appointments`;
 
-//This is for the doctor to get all the patient Appointments
-export async function getAllAppointments(date, patientName, token) {
-  const response = await fetch(`${APPOINTMENT_API}/${date}/${patientName}/${token}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch appointments");
-  }
-
-  return await response.json();
+export async function getAllAppointments(date, patientName) {
+  const params = new URLSearchParams();
+  if (date) params.set("date", date);
+  if (patientName && patientName !== "all") params.set("patientName", patientName);
+  return { appointments: await readJson(`${APPOINTMENTS_API}?${params}`) };
 }
 
-export async function bookAppointment(appointment, token) {
+export async function bookAppointment(appointment) {
   try {
-    const response = await fetch(`${APPOINTMENT_API}/${token}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(appointment)
-    });
-
-    const data = await response.json();
-    return {
-      success: response.ok,
-      message: data.message || "Something went wrong"
+    const body = {
+      doctorId: appointment.doctorId ?? appointment.doctor?.id,
+      appointmentTime: appointment.appointmentTime,
     };
+    await readJson(APPOINTMENTS_API, { method: "POST", body: JSON.stringify(body) });
+    return { success: true, message: "Appointment booked" };
   } catch (error) {
-    console.error("Error while booking appointment:", error);
-    return {
-      success: false,
-      message: "Network error. Please try again later."
-    };
+    return { success: false, message: error.message };
   }
 }
 
-export async function updateAppointment(appointment, token) {
+export async function updateAppointment(appointment) {
   try {
-    const response = await fetch(`${APPOINTMENT_API}/${token}`, {
+    await readJson(`${APPOINTMENTS_API}/${encodeURIComponent(appointment.id)}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(appointment)
+      body: JSON.stringify({ appointmentTime: appointment.appointmentTime }),
     });
-
-    const data = await response.json();
-    return {
-      success: response.ok,
-      message: data.message || "Something went wrong"
-    };
+    return { success: true, message: "Appointment updated" };
   } catch (error) {
-    console.error("Error while booking appointment:", error);
-    return {
-      success: false,
-      message: "Network error. Please try again later."
-    };
+    return { success: false, message: error.message };
   }
+}
+
+export async function cancelAppointment(id) {
+  await readJson(`${APPOINTMENTS_API}/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

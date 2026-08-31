@@ -1,17 +1,17 @@
-# Build stage: compile and package the Spring Boot application with Maven and JDK 17.
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
-WORKDIR /app
+WORKDIR /workspace
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn --batch-mode clean package -DskipTests
 
-# Runtime stage: copy only the packaged JAR into a smaller Java 17 image.
-FROM eclipse-temurin:17.0.15_6-jre
+FROM eclipse-temurin:17-jre-jammy
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --uid 10001 appuser
 WORKDIR /app
-COPY --from=builder /app/target/back-end-0.0.1-SNAPSHOT.jar app.jar
-
-# Spring Boot serves HTTP traffic on port 8080.
+COPY --from=builder /workspace/target/back-end-0.0.1-SNAPSHOT.jar /app/app.jar
+RUN chown appuser:appuser /app/app.jar
+USER appuser
 EXPOSE 8080
-
-# Start the Smart Clinic backend when the container launches.
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70.0", "-jar", "/app/app.jar"]
