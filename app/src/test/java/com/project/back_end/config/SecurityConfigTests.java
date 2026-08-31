@@ -2,7 +2,9 @@ package com.project.back_end.config;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -104,6 +106,29 @@ class SecurityConfigTests {
                 .header("Authorization", "Bearer " + doctorToken))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"));
+    }
+
+    @Test
+    void emitsStrictSecurityHeadersAndAllowsOnlyConfiguredCorsOrigin() throws Exception {
+        mvc.perform(get("/"))
+                .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("default-src 'self'"),
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("unsafe-inline")),
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("unsafe-eval")))))
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer"));
+
+        mvc.perform(options("/api/doctors")
+                .header("Origin", "http://localhost:8080")
+                .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8080"));
+
+        mvc.perform(options("/api/doctors")
+                .header("Origin", "https://untrusted.example")
+                .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
 
     @RestController

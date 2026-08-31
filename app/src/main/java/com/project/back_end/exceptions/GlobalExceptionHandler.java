@@ -49,6 +49,15 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
     }
 
+    @ExceptionHandler(com.project.back_end.services.RateLimitExceededException.class)
+    ResponseEntity<ProblemDetail> handle(com.project.back_end.services.RateLimitExceededException exception,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", Long.toString(exception.retryAfterSeconds()))
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(base(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", "Too many requests", request));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ProblemDetail> handle(MethodArgumentNotValidException exception, HttpServletRequest request) {
         ProblemDetail problem = base(HttpStatus.BAD_REQUEST, "Validation failed", "Request validation failed", request);

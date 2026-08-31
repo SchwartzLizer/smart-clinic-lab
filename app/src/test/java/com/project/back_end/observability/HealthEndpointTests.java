@@ -68,7 +68,16 @@ class HealthEndpointTests {
     @Test
     void exposesOnlyHealthAndInfoActuatorEndpoints() throws Exception {
         mvc.perform(get("/actuator/health")).andExpect(status().isOk());
-        mvc.perform(get("/actuator/info")).andExpect(status().isOk());
+        mvc.perform(get("/actuator/info"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.app.name").value("smart-clinic"))
+                .andExpect(jsonPath("$.app.version").exists())
+                .andExpect(jsonPath("$.app.revision").exists())
+                .andExpect(jsonPath("$.app.environment").exists())
+                .andExpect(jsonPath("$.app.data").value("synthetic"))
+                .andExpect(jsonPath("$.app.sla").value("none"))
+                .andExpect(jsonPath("$.db").doesNotExist())
+                .andExpect(jsonPath("$.mongo").doesNotExist());
         mvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
         mvc.perform(get("/actuator/health").header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk())

@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,28 +44,23 @@ public class AppointmentService {
     /** Compatibility constructor for course-era callers. */
     public AppointmentService(AppointmentRepository appointmentRepository, TokenService tokenService,
             DoctorService ignoredDoctorService) {
-        this(appointmentRepository, tokenService, null, null, new AppointmentMapper(), Clock.systemUTC());
+        this(appointmentRepository, tokenService, null, null, new AppointmentMapper(), Clock.system(ZoneId.of("Asia/Bangkok")));
     }
 
     @org.springframework.beans.factory.annotation.Autowired
     public AppointmentService(AppointmentRepository appointmentRepository, TokenService tokenService,
-            DoctorRepository doctors, PatientRepository patients, AppointmentMapper mapper) {
-        this(appointmentRepository, tokenService, doctors, patients, mapper, Clock.systemUTC());
-    }
-
-    public AppointmentService(AppointmentRepository appointmentRepository, TokenService tokenService,
-            DoctorRepository doctors, PatientRepository patients, Clock clock) {
-        this(appointmentRepository, tokenService, doctors, patients, new AppointmentMapper(), clock);
-    }
-
-    private AppointmentService(AppointmentRepository appointmentRepository, TokenService tokenService,
-            DoctorRepository doctors, PatientRepository patients, AppointmentMapper mapper, Clock clock) {
+            DoctorRepository doctors, PatientRepository patients, AppointmentMapper mapper, Clock clinicClock) {
         this.appointmentRepository = appointmentRepository;
         this.tokenService = tokenService;
         this.doctors = doctors;
         this.patients = patients;
         this.mapper = mapper;
-        this.clock = clock;
+        this.clock = clinicClock;
+    }
+
+    public AppointmentService(AppointmentRepository appointmentRepository, TokenService tokenService,
+            DoctorRepository doctors, PatientRepository patients, Clock clock) {
+        this(appointmentRepository, tokenService, doctors, patients, new AppointmentMapper(), clock);
     }
 
     @Transactional(readOnly = true)

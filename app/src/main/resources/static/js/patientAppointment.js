@@ -31,34 +31,41 @@ export function splitAppointmentTime(appointmentTime) {
 }
 
 export function renderAppointments(appointments) {
-  tableBody.innerHTML = "";
-
-  const actionTh = document.querySelector("#patientTable thead tr th:last-child");
-  if (actionTh) {
-    actionTh.style.display = "table-cell"; // Always show "Actions" column
-  }
+  tableBody.replaceChildren();
 
   if (!appointments.length) {
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No Appointments Found</td></tr>`;
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "empty-table-cell";
+    cell.textContent = "No Appointments Found";
+    row.append(cell);
+    tableBody.appendChild(row);
     return;
   }
 
   appointments.forEach(appointment => {
     const { appointmentDate, appointmentTimeOnly } = splitAppointmentTime(appointment.appointmentTime);
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${appointment.patient?.name || "You"}</td>
-      <td>${appointment.doctor?.name || ""}</td>
-      <td>${appointmentDate}</td>
-      <td>${appointmentTimeOnly}</td>
-      <td>${appointment.status == 0 ? `<img src="../assets/images/edit/edit.png" alt="Edit" class="prescription-btn" data-id="${appointment.id}">` : "-"}</td>
-    `;
+    [appointment.patient?.name || "You", appointment.doctor?.name || "", appointmentDate, appointmentTimeOnly]
+      .forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        tr.append(cell);
+      });
+    const action = document.createElement("td");
 
     if (appointment.status == 0) {
-      const actionBtn = tr.querySelector(".prescription-btn");
-      actionBtn?.addEventListener("click", () => redirectToUpdatePage(appointment));
+      const actionBtn = document.createElement("img");
+      actionBtn.src = "../assets/images/edit/edit.png";
+      actionBtn.alt = "Edit";
+      actionBtn.className = "prescription-btn";
+      actionBtn.addEventListener("click", () => redirectToUpdatePage(appointment));
+      action.append(actionBtn);
+    } else {
+      action.textContent = "-";
     }
-
+    tr.append(action);
     tableBody.appendChild(tr);
   });
 }

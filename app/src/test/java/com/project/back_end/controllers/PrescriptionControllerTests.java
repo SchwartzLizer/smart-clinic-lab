@@ -22,6 +22,7 @@ import com.project.back_end.mappers.PrescriptionMapper;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Doctor;
 import com.project.back_end.models.Patient;
+import com.project.back_end.models.Prescription;
 import com.project.back_end.repo.AdminRepository;
 import com.project.back_end.repo.AppointmentRepository;
 import com.project.back_end.repo.DoctorRepository;
@@ -51,6 +52,7 @@ class PrescriptionControllerTests {
     @Test
     void doctorCanCreatePrescription() throws Exception {
         when(appointments.findById(50L)).thenReturn(java.util.Optional.of(appointment()));
+        when(appointments.updateStatus(1, 50L)).thenReturn(1);
         when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of());
         when(prescriptions.save(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> invocation.getArgument(0));
         String token = tokens.generateToken(7L, "doctor@example.com", Role.DOCTOR);
@@ -62,6 +64,23 @@ class PrescriptionControllerTests {
                         "\"medication\":\"Amoxicillin\",\"dosage\":\"500mg\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith("application/json"));
+    }
+
+    @Test
+    void identicalRetryReturnsOk() throws Exception {
+        Prescription existing = new Prescription("Patient One", 50L, "Amoxicillin", "500mg", null);
+        existing.setId("rx-1");
+        when(appointments.findById(50L)).thenReturn(java.util.Optional.of(appointment()));
+        when(appointments.updateStatus(1, 50L)).thenReturn(1);
+        when(prescriptions.findByAppointmentId(50L)).thenReturn(List.of(existing));
+        String token = tokens.generateToken(7L, "doctor@example.com", Role.DOCTOR);
+
+        mvc.perform(post("/api/prescriptions")
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content("{\"patientName\":\"Patient One\",\"appointmentId\":50,"
+                        + "\"medication\":\"Amoxicillin\",\"dosage\":\"500mg\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test

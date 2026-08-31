@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,18 +52,26 @@ public class PrescriptionService {
      * because appointment ID duplicate detection prevents a second document.
      */
     @Transactional
-    public PrescriptionResponse createPrescription(AuthenticatedUser principal, PrescriptionCreateRequest request) {
+    public PrescriptionCreationResult createPrescription(AuthenticatedUser principal, PrescriptionCreateRequest request) {
         requireRole(principal, Role.DOCTOR);
         Appointment appointment = appointment(request.appointmentId());
         verifyDoctorOwnership(principal, appointment);
-        if (!prescriptions.findByAppointmentId(request.appointmentId()).isEmpty()) {
-            throw new ResourceConflictException("Prescription already exists for appointment");
+        Prescription existing = prescriptions.findByAppointmentId(request.appointmentId()).stream().findFirst().orElse(null);
+        if (existing != null) {
+            return existingResult(existing, request);
         }
         Prescription prescription = new Prescription(request.patientName(), request.appointmentId(),
-                request.medication(), request.dosage(), request.doctorNotes());
-        Prescription saved = prescriptions.save(prescription);
-        appointments.updateStatus(1, request.appointmentId());
-        return mapper.toResponse(saved);
+                request.medication(), request.dosage(), normalizeNotes(request.doctorNotes()));
+        Prescription saved;
+        try {
+            saved = prescriptions.save(prescription);
+        } catch (DuplicateKeyException race) {
+            Prescription raced = prescriptions.findByAppointmentId(request.appointmentId()).stream().findFirst()
+                    .orElseThrow(() -> race);
+            return existingResult(raced, request);
+        }
+        completeAppointment(request.appointmentId());
+        return new PrescriptionCreationResult(mapper.toResponse(saved), HttpStatus.CREATED);
     }
 
     @Transactional(readOnly = true)
@@ -89,6 +98,32 @@ public class PrescriptionService {
         if (appointment.getDoctor() == null || !principal.accountId().equals(appointment.getDoctor().getId())) {
             throw new ForbiddenOperationException("Doctor is not assigned to appointment");
         }
+    }
+
+    private PrescriptionCreationResult existingResult(Prescription existing, PrescriptionCreateRequest request) {
+        if (!samePrescription(existing, request)) {
+            throw new ResourceConflictException("Prescription already exists with different content");
+        }
+        completeAppointment(request.appointmentId());
+        return new PrescriptionCreationResult(mapper.toResponse(existing), HttpStatus.OK);
+    }
+
+    private void completeAppointment(Long appointmentId) {
+        if (appointments.updateStatus(1, appointmentId) != 1) {
+            throw new IllegalStateException("Appointment completion update failed");
+        }
+    }
+
+    private boolean samePrescription(Prescription existing, PrescriptionCreateRequest request) {
+        return java.util.Objects.equals(existing.getPatientName(), request.patientName())
+                && java.util.Objects.equals(existing.getAppointmentId(), request.appointmentId())
+                && java.util.Objects.equals(existing.getMedication(), request.medication())
+                && java.util.Objects.equals(existing.getDosage(), request.dosage())
+                && java.util.Objects.equals(normalizeNotes(existing.getDoctorNotes()), normalizeNotes(request.doctorNotes()));
+    }
+
+    private String normalizeNotes(String notes) {
+        return notes == null || notes.trim().isEmpty() ? null : notes.trim();
     }
 
     private void requireRole(AuthenticatedUser principal, Role... allowed) {

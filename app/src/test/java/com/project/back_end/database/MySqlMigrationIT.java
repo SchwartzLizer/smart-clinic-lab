@@ -22,6 +22,12 @@ class MySqlMigrationIT {
             .withUsername("smart_clinic")
             .withPassword("smart-clinic-local-only");
 
+    @Container
+    static final MySQLContainer<?> cloudMysql = new MySQLContainer<>("mysql:8.4")
+            .withDatabaseName("smart_clinic_cloud")
+            .withUsername("smart_clinic")
+            .withPassword("smart-clinic-local-only");
+
     @Test
     void appliesSchemaProceduresAndHasHashedDemoPasswords() throws Exception {
         Flyway flyway = Flyway.configure()
@@ -45,6 +51,32 @@ class MySqlMigrationIT {
             try (ResultSet passwords = statement.executeQuery("SELECT password FROM admin")) {
                 while (passwords.next()) {
                     assertThat(passwords.getString(1)).startsWith("$2");
+                }
+            }
+        }
+    }
+
+    @Test
+    void cloudTrackCreatesSchemaAndProceduresWithoutDemoRows() throws Exception {
+        Flyway flyway = Flyway.configure()
+                .dataSource(cloudMysql.getJdbcUrl(), cloudMysql.getUsername(), cloudMysql.getPassword())
+                .locations("classpath:db/cloud-migration", "classpath:db/common-migration")
+                .baselineOnMigrate(false)
+                .cleanDisabled(true)
+                .validateOnMigrate(true)
+                .load();
+
+        flyway.migrate();
+        assertThat(flyway.info().applied())
+                .extracting(info -> info.getVersion().getVersion())
+                .containsExactlyInAnyOrder("1", "2");
+        try (Connection connection = DriverManager.getConnection(
+                cloudMysql.getJdbcUrl(), cloudMysql.getUsername(), cloudMysql.getPassword());
+                Statement statement = connection.createStatement()) {
+            for (String table : java.util.List.of("admin", "doctor", "patient", "appointment")) {
+                try (ResultSet rows = statement.executeQuery("SELECT COUNT(*) FROM " + table)) {
+                    rows.next();
+                    assertThat(rows.getInt(1)).isZero();
                 }
             }
         }

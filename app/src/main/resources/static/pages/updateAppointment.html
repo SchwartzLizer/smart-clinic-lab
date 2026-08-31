@@ -18,7 +18,7 @@
     <script type="module" src="../js/updateAppointment.js" defer></script>
 </head>
 
-<body onload="renderContent()">
+<body data-require-role="true">
     <div class="container">
         <div class="wrapper">
             <div id="header"></div>
@@ -40,8 +40,7 @@
                         </select>
 
                         <button type="submit" class="btn-primary" id="updateAppointment">Update Appointment</button>
-                        <button type="button" onclick="window.location.href='/pages/patientAppointments.html'"
-                            class="btn-secondary">Cancel</button>
+                        <button type="button" id="cancelUpdate" class="btn-secondary">Cancel</button>
                     </form>
                 </div>
             </div>
