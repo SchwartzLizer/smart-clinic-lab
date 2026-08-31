@@ -70,6 +70,14 @@ class SecurityConfigTests {
     }
 
     @Test
+    void dashboardPageShellsArePublic() throws Exception {
+        mvc.perform(get("/adminDashboard"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/doctorDashboard"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void apiWithoutBearerTokenReturnsProblemDetail401() throws Exception {
         mvc.perform(get("/api/security-probe"))
                 .andExpect(status().isUnauthorized())

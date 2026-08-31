@@ -120,7 +120,7 @@ Public runtime endpoints:
 - Liveness: `http://localhost:8080/actuator/health/liveness`
 - Readiness: `http://localhost:8080/actuator/health/readiness`
 
-The Testcontainers integration suite is `SmartClinicApiIT`. It requires a working Docker daemon; the current development host has Docker unavailable, so that test is intentionally reported separately from the passing unit/MVC suite.
+The latest Java 17 clean verification passed 71 unit/MVC tests and 3 Testcontainers integration tests: `SmartClinicApiIT`, `MongoPrescriptionIT`, and `MySqlMigrationIT`.
 
 ## Security decisions and trade-offs
 
@@ -129,7 +129,7 @@ The Testcontainers integration suite is `SmartClinicApiIT`. It requires a workin
 - Sessions, form login, and HTTP Basic are disabled for the API; the filter chain is stateless.
 - Ownership is rechecked against persisted appointment relationships for every patient/doctor operation.
 - Prescriptions live in MongoDB while appointments/status live in MySQL. There is no cross-database atomic transaction; duplicate appointment IDs make retries safe and the service documents the write order.
-- Two deprecated token-path methods remain only for the original course reflection tests. The frontend and all modern API calls use bearer headers; those compatibility methods are not a supported portfolio contract.
+- Legacy controller mappings have been removed. The frontend and protected API calls use bearer headers; tokens are never accepted in URLs.
 
 ## Free deployment
 

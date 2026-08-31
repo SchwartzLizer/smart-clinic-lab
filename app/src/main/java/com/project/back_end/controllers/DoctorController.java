@@ -1,11 +1,7 @@
 package com.project.back_end.controllers;
 
-import java.time.LocalDate;
-import java.util.Map;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -71,14 +67,4 @@ public class DoctorController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Kept only for the original course reflection criterion. */
-    @Deprecated
-    @GetMapping("/legacy/availability/{user}/{doctorId}/{date}/{token}")
-    public ResponseEntity<Map<String, Object>> getDoctorAvailability(
-            @PathVariable String user,
-            @PathVariable Long doctorId,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @PathVariable String token) {
-        return ResponseEntity.ok(Map.of("availability", doctors.getDoctorAvailability(doctorId, date)));
-    }
 }

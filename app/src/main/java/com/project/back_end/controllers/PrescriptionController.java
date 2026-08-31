@@ -1,7 +1,5 @@
 package com.project.back_end.controllers;
 
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,7 +13,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.project.back_end.DTO.prescription.PrescriptionCreateRequest;
 import com.project.back_end.DTO.prescription.PrescriptionResponse;
-import com.project.back_end.models.Prescription;
 import com.project.back_end.security.AuthenticatedUser;
 import com.project.back_end.services.PrescriptionService;
 
@@ -46,11 +43,4 @@ public class PrescriptionController {
         return prescriptions.getPrescription(principal, appointmentId);
     }
 
-    /** Kept only for the original course reflection criterion during migration. */
-    @Deprecated
-    @PostMapping("/legacy/{token}")
-    public ResponseEntity<Map<String, String>> savePrescription(
-            @PathVariable String token, @Valid @RequestBody Prescription prescription) {
-        return prescriptions.savePrescription(prescription);
-    }
 }
