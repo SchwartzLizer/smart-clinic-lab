@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.project.back_end.config.SecurityConfig;
 import com.project.back_end.config.properties.JwtProperties;
+import com.project.back_end.mappers.PrescriptionMapper;
 import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Doctor;
 import com.project.back_end.models.Patient;
@@ -27,12 +28,15 @@ import com.project.back_end.repo.DoctorRepository;
 import com.project.back_end.repo.PatientRepository;
 import com.project.back_end.repo.PrescriptionRepository;
 import com.project.back_end.security.Role;
+import com.project.back_end.security.RestAccessDeniedHandler;
+import com.project.back_end.security.RestAuthenticationEntryPoint;
 import com.project.back_end.services.PrescriptionService;
 import com.project.back_end.services.TokenService;
 
 @WebMvcTest(controllers = PrescriptionController.class, properties = "app.demo-data.enabled=false")
 @EnableConfigurationProperties(JwtProperties.class)
-@Import({SecurityConfig.class, PrescriptionService.class, TokenService.class})
+@Import({SecurityConfig.class, PrescriptionService.class, TokenService.class, PrescriptionMapper.class,
+        RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
 class PrescriptionControllerTests {
 
     @Autowired private MockMvc mvc;

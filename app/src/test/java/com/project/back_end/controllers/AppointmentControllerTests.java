@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -21,12 +22,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.project.back_end.DTO.appointment.AppointmentResponse;
 import com.project.back_end.config.SecurityConfig;
 import com.project.back_end.config.properties.JwtProperties;
+import com.project.back_end.mappers.AppointmentMapper;
 import com.project.back_end.repo.AdminRepository;
 import com.project.back_end.repo.AppointmentRepository;
 import com.project.back_end.repo.DoctorRepository;
 import com.project.back_end.repo.PatientRepository;
 import com.project.back_end.repo.PrescriptionRepository;
 import com.project.back_end.security.Role;
+import com.project.back_end.security.RestAccessDeniedHandler;
+import com.project.back_end.security.RestAuthenticationEntryPoint;
 import com.project.back_end.services.AppointmentService;
 import com.project.back_end.services.TokenService;
 import com.project.back_end.models.Appointment;
@@ -35,7 +39,8 @@ import com.project.back_end.models.Patient;
 
 @WebMvcTest(controllers = AppointmentController.class, properties = "app.demo-data.enabled=false")
 @EnableConfigurationProperties(JwtProperties.class)
-@Import({SecurityConfig.class, AppointmentService.class, TokenService.class})
+@Import({SecurityConfig.class, AppointmentService.class, TokenService.class, AppointmentMapper.class,
+        RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class})
 class AppointmentControllerTests {
 
     @Autowired private MockMvc mvc;
@@ -67,7 +72,18 @@ class AppointmentControllerTests {
                 .contentType("application/json")
                 .content("{\"doctorId\":7,\"appointmentTime\":\"2030-01-10T09:00:00\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentTypeCompatibleWith("application/json"));
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(5)))
+                .andExpect(jsonPath("$.id").value(50))
+                .andExpect(jsonPath("$.doctor.id").value(7))
+                .andExpect(jsonPath("$.doctor.name").value("Dr. One"))
+                .andExpect(jsonPath("$.doctor.specialty").value("Cardiology"))
+                .andExpect(jsonPath("$.patient.id").value(10))
+                .andExpect(jsonPath("$.patient.name").value("Patient One"))
+                .andExpect(jsonPath("$.appointmentTime").value("2030-01-10T09:00:00"))
+                .andExpect(jsonPath("$.status").value(0))
+                .andExpect(jsonPath("$.appointmentDate").doesNotExist())
+                .andExpect(jsonPath("$.appointmentTimeOnly").doesNotExist());
     }
 
     @Test

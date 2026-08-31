@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -36,6 +37,7 @@ import com.project.back_end.services.TokenService;
         "app.demo-data.enabled=false"
 })
 @AutoConfigureMockMvc
+@Import(SecurityConfigTests.SecurityProbeController.class)
 class SecurityConfigTests {
 
     @Autowired

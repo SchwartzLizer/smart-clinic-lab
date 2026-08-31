@@ -25,7 +25,12 @@ async function initializePage() {
   }
 }
 
-function renderAppointments(appointments) {
+export function splitAppointmentTime(appointmentTime) {
+  const [appointmentDate, appointmentTimeOnly] = appointmentTime.split("T");
+  return { appointmentDate, appointmentTimeOnly };
+}
+
+export function renderAppointments(appointments) {
   tableBody.innerHTML = "";
 
   const actionTh = document.querySelector("#patientTable thead tr th:last-child");
@@ -39,12 +44,13 @@ function renderAppointments(appointments) {
   }
 
   appointments.forEach(appointment => {
+    const { appointmentDate, appointmentTimeOnly } = splitAppointmentTime(appointment.appointmentTime);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${appointment.patient?.name || "You"}</td>
       <td>${appointment.doctor?.name || ""}</td>
-      <td>${appointment.appointmentDate}</td>
-      <td>${appointment.appointmentTimeOnly}</td>
+      <td>${appointmentDate}</td>
+      <td>${appointmentTimeOnly}</td>
       <td>${appointment.status == 0 ? `<img src="../assets/images/edit/edit.png" alt="Edit" class="prescription-btn" data-id="${appointment.id}">` : "-"}</td>
     `;
 
@@ -57,18 +63,21 @@ function renderAppointments(appointments) {
   });
 }
 
-function redirectToUpdatePage(appointment) {
-  // Prepare the query parameters
-  const queryString = new URLSearchParams({
+export function buildUpdateAppointmentQuery(appointment) {
+  const { appointmentDate, appointmentTimeOnly } = splitAppointmentTime(appointment.appointmentTime);
+  return new URLSearchParams({
     appointmentId: appointment.id,
     patientId: appointment.patient?.id,
     patientName: appointment.patient?.name || "You",
     doctorName: appointment.doctor?.name || "",
     doctorId: appointment.doctor?.id,
-    appointmentDate: appointment.appointmentDate,
-    appointmentTime: appointment.appointmentTimeOnly,
+    appointmentDate,
+    appointmentTime: appointmentTimeOnly,
   }).toString();
+}
 
+function redirectToUpdatePage(appointment) {
+  const queryString = buildUpdateAppointmentQuery(appointment);
   // Redirect to the update page with the query string
   setTimeout(() => {
     window.location.href = `/pages/updateAppointment.html?${queryString}`;
