@@ -76,6 +76,31 @@ class CloudEnvironmentValidatorTests {
     }
 
     @Test
+    void cloudBootstrapRequiresItsVariablesOnlyWhenEnabledWithoutEchoingValues() {
+        new ApplicationContextRunner()
+                .withUserConfiguration(CloudEnvironmentValidator.class)
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("cloud"))
+                .withPropertyValues(validCloudProperties())
+                .withPropertyValues("APP_BOOTSTRAP_ENABLED=true")
+                .run(context -> {
+                    assertThat(context).hasFailed();
+                    String message = context.getStartupFailure().getMessage();
+                    assertThat(message).contains("APP_BOOTSTRAP_ADMIN_USERNAME", "APP_BOOTSTRAP_DOCTOR_PASSWORD");
+                    assertThat(message).doesNotContain("true");
+                });
+    }
+
+    @Test
+    void cloudBootstrapRejectsNonBooleanFlag() {
+        new ApplicationContextRunner()
+                .withUserConfiguration(CloudEnvironmentValidator.class)
+                .withInitializer(context -> context.getEnvironment().setActiveProfiles("cloud"))
+                .withPropertyValues(validCloudProperties())
+                .withPropertyValues("APP_BOOTSTRAP_ENABLED=enabled")
+                .run(context -> assertThat(context.getStartupFailure().getMessage()).contains("APP_BOOTSTRAP_ENABLED"));
+    }
+
+    @Test
     void acceptsMultipleExactOriginsAndDistinctStrongCloudCredentials() {
         assertThat(CloudEnvironmentValidator.invalid("CORS_ALLOWED_ORIGINS",
                 "https://app.example.com,https://admin.example.com:8443")).isFalse();
@@ -100,5 +125,17 @@ class CloudEnvironmentValidatorTests {
                 .withProperty("APP_VERSION", "1.0.0")
                 .withProperty("APP_REVISION", "abc123")
                 .withProperty("APP_ENVIRONMENT", "production");
+    }
+
+    private static String[] validCloudProperties() {
+        return new String[] {
+                "DB_URL=jdbc:mysql://db.example.com:3306/clinic",
+                "DB_USERNAME=runtime_user", "DB_PASSWORD=strong-runtime-password",
+                "FLYWAY_DB_URL=jdbc:mysql://db.example.com:3306/clinic",
+                "FLYWAY_DB_USERNAME=migration_user", "FLYWAY_DB_PASSWORD=strong-migration-password",
+                "MONGODB_URI=mongodb://mongo.example.com:27017/clinic",
+                "JWT_SECRET=production-signing-key-with-at-least-thirty-two-bytes",
+                "CORS_ALLOWED_ORIGINS=https://app.example.com",
+                "APP_VERSION=1.0.0", "APP_REVISION=abc123", "APP_ENVIRONMENT=production" };
     }
 }

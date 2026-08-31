@@ -38,5 +38,24 @@ services:
         sync: false
       - key: APP_ENVIRONMENT
         value: cloud
+      # One-time cloud identity bootstrap. Keep disabled unless all managed values exist.
+      - key: APP_BOOTSTRAP_ENABLED
+        value: "false"
+      - key: APP_BOOTSTRAP_ADMIN_USERNAME
+        sync: false
+      - key: APP_BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_NAME
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_SPECIALTY
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_EMAIL
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_PASSWORD
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_PHONE
+        sync: false
+      - key: APP_BOOTSTRAP_DOCTOR_AVAILABLE_TIMES
+        sync: false
       - key: JAVA_TOOL_OPTIONS
         value: -XX:MaxRAMPercentage=70.0
