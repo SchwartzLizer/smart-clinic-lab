@@ -56,8 +56,7 @@ public class SecurityConfig {
                                 "/actuator/health/**",
                                 "/actuator/info")
                         .permitAll()
-                        .requestMatchers("/adminDashboard").hasRole("ADMIN")
-                        .requestMatchers("/doctorDashboard").hasRole("DOCTOR")
+                        .requestMatchers("/adminDashboard", "/doctorDashboard").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/doctors/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/**", "/api/login", "/api/register", "/api/patients")
                         .permitAll()
@@ -82,9 +81,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/prescriptions")
                         .hasRole("DOCTOR")
                         .requestMatchers("/api/**").authenticated()
-                        // Course-era routes remain available while API controllers are migrated in Phase 3.
-                        .requestMatchers("/admin/**", "/doctor/**", "/patient/**", "/appointments/**", "/prescription/**")
-                        .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

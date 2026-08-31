@@ -1,5 +1,6 @@
 package com.project.back_end.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,7 +45,7 @@ class OpenApiContractTests {
 
     @Test
     void publishesApprovedPathsBearerSchemeAndSafeResponseSchemas() throws Exception {
-        mvc.perform(get("/v3/api-docs"))
+        String openApi = mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/auth/admin/login'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/auth/doctors/login'].post").exists())
@@ -62,6 +63,10 @@ class OpenApiContractTests {
                 .andExpect(jsonPath("$.paths['/api/patients/me'].get.security[0].bearerAuth").exists())
                 .andExpect(jsonPath("$.paths['/api/auth/admin/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.components.schemas.DoctorResponse.properties.password").doesNotExist())
-                .andExpect(jsonPath("$.components.schemas.PatientResponse.properties.password").doesNotExist());
+                .andExpect(jsonPath("$.components.schemas.PatientResponse.properties.password").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(openApi).doesNotContain("/legacy");
+        assertThat(openApi).doesNotContain("{token}");
     }
 }
