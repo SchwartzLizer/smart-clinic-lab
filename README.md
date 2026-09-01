@@ -43,6 +43,14 @@ The request/data flow and module responsibilities are in [`docs/architecture.md`
 
 Requirements: Docker Desktop and Git. Java 17 and Node.js 20+ are needed for non-container verification commands.
 
+On Windows, run the one-command launcher from the repository root. It creates `.env` from `.env.example` only when needed, starts Docker Desktop when available, waits for MySQL, MongoDB, and application readiness, then opens the website:
+
+```powershell
+.\start-smart-clinic.cmd
+```
+
+The equivalent manual commands are:
+
 ```powershell
 Copy-Item .env.example .env
 docker compose up --build --wait
