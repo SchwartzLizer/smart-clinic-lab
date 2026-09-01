@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2840" height="900" viewBox="0 0 2840 900" role="img" aria-labelledby="title desc">
+  <title id="title">Smart Clinic appointment care BPMN diagram</title>
+  <desc id="desc">Three-lane BPMN process for a patient booking a doctor, slot validation, cancellation or consultation, optional prescription storage, appointment completion, and patient notification.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38515b" />
+    </marker>
+    <style>
+      .canvas{fill:#f8fbfb}.pool{fill:#fff;stroke:#173e38;stroke-width:3}.lane-patient{fill:#eef8f6}.lane-platform{fill:#f8fbfb}.lane-doctor{fill:#f4f1fb}.lane-line{stroke:#9bb3af;stroke-width:2}.lane-label{font:700 22px Inter,Arial,sans-serif;fill:#173e38;letter-spacing:.04em}.task{fill:#fff;stroke:#168477;stroke-width:3}.task-doctor{fill:#fff;stroke:#6d55a3;stroke-width:3}.task-target{fill:#fff8eb;stroke:#d88318;stroke-width:3;stroke-dasharray:10 7}.task-label{font:600 16px Inter,Arial,sans-serif;fill:#173e38;text-anchor:middle}.small{font:500 13px Inter,Arial,sans-serif;fill:#536d69}.flow{fill:none;stroke:#38515b;stroke-width:3;marker-end:url(#arrow)}.event{fill:#fff;stroke:#168477;stroke-width:4}.end{fill:#fff;stroke:#173e38;stroke-width:7}.gateway{fill:#fff;stroke:#168477;stroke-width:3}.gateway-doctor{fill:#fff;stroke:#6d55a3;stroke-width:3}.gateway-mark{stroke:#168477;stroke-width:3;fill:none}.gateway-mark-doctor{stroke:#6d55a3;stroke-width:3;fill:none}.label{font:700 14px Inter,Arial,sans-serif;fill:#38515b}.message{stroke:#168477;stroke-width:2;fill:none}.timer{stroke:#168477;stroke-width:2;fill:none}.data{fill:#fff;stroke:#44756e;stroke-width:3}.association{fill:none;stroke:#718985;stroke-width:2;stroke-dasharray:6 6}.annotation{fill:#fff8eb;stroke:#d88318;stroke-width:2;stroke-dasharray:8 6}.annotation-retry{fill:#f5f1ff;stroke:#6d55a3;stroke-width:2;stroke-dasharray:8 6}.annotation-text{font:600 14px Inter,Arial,sans-serif;fill:#5d4528}.heading{font:800 28px Inter,Arial,sans-serif;fill:#173e38}.subheading{font:500 15px Inter,Arial,sans-serif;fill:#536d69}.legend{font:600 14px Inter,Arial,sans-serif;fill:#38515b}
+    </style>
+  </defs>
+
+  <rect class="canvas" width="2840" height="900" />
+  <text class="heading" x="40" y="34">Smart Clinic — Appointment Care Workflow</text>
+  <text class="subheading" x="40" y="58">BPMN 2.0 target-state design • current Spring Boot behavior mapped to MySQL and MongoDB boundaries</text>
+
+  <rect class="pool" x="30" y="80" width="2780" height="760" rx="8" />
+  <rect class="lane-patient" x="90" y="80" width="2720" height="200" />
+  <rect class="lane-platform" x="90" y="280" width="2720" height="330" />
+  <rect class="lane-doctor" x="90" y="610" width="2720" height="230" />
+  <line class="lane-line" x1="90" y1="280" x2="2810" y2="280" />
+  <line class="lane-line" x1="90" y1="610" x2="2810" y2="610" />
+  <line class="lane-line" x1="90" y1="80" x2="90" y2="840" />
+  <text class="lane-label" transform="translate(68 215) rotate(-90)">PATIENT</text>
+  <text class="lane-label" transform="translate(68 500) rotate(-90)">PLATFORM</text>
+  <text class="lane-label" transform="translate(68 765) rotate(-90)">DOCTOR</text>
+
+  <!-- Patient starts booking -->
+  <circle class="event" cx="125" cy="170" r="22" />
+  <text class="small" x="125" y="211" text-anchor="middle">Appointment needed</text>
+  <rect class="task" x="175" y="125" width="160" height="90" rx="12" />
+  <text class="task-label" x="255" y="163"><tspan x="255">Select doctor</tspan><tspan x="255" dy="22">and future slot</tspan></text>
+  <path class="flow" d="M147 170 H175" />
+
+  <!-- Platform booking validation -->
+  <rect class="task" x="380" y="380" width="170" height="90" rx="12" />
+  <text class="task-label" x="465" y="417"><tspan x="465">Authenticate patient</tspan><tspan x="465" dy="22">and resolve identity</tspan></text>
+  <path class="flow" d="M335 170 H355 V425 H380" />
+
+  <rect class="task" x="600" y="380" width="180" height="90" rx="12" />
+  <text class="task-label" x="690" y="407"><tspan x="690">Validate doctor, slot,</tspan><tspan x="690" dy="22">future date, and</tspan><tspan x="690" dy="22">booking conflict</tspan></text>
+  <path class="flow" d="M550 425 H600" />
+
+  <polygon class="gateway" points="845,400 875,430 845,460 815,430" />
+  <path class="gateway-mark" d="M835 420 L855 440 M855 420 L835 440" />
+  <text class="label" x="845" y="520" text-anchor="middle">Slot available?</text>
+  <path class="flow" d="M780 425 H815" />
+
+  <!-- Slot unavailable -->
+  <rect class="task" x="920" y="305" width="175" height="82" rx="12" />
+  <text class="task-label" x="1008" y="336"><tspan x="1008">Return conflict and</tspan><tspan x="1008" dy="22">alternative slots</tspan></text>
+  <path class="flow" d="M845 400 V346 H920" />
+  <text class="label" x="865" y="338">No</text>
+  <circle class="end" cx="1140" cy="346" r="20" />
+  <path class="flow" d="M1095 346 H1120" />
+  <text class="small" x="1140" y="383" text-anchor="middle">Not booked</text>
+
+  <!-- Slot available -->
+  <rect class="task" x="920" y="445" width="175" height="82" rx="12" />
+  <text class="task-label" x="1008" y="477"><tspan x="1008">Persist scheduled</tspan><tspan x="1008" dy="22">appointment</tspan></text>
+  <path class="flow" d="M845 460 V486 H920" />
+  <text class="label" x="862" y="483">Yes</text>
+
+  <rect class="task" x="1140" y="445" width="180" height="82" rx="12" />
+  <text class="task-label" x="1230" y="477"><tspan x="1230">Confirm booking to</tspan><tspan x="1230" dy="22">patient and doctor</tspan></text>
+  <path class="flow" d="M1095 486 H1140" />
+
+  <polygon class="gateway" points="1390,456 1420,486 1390,516 1360,486" />
+  <circle class="gateway-mark" cx="1390" cy="486" r="15" />
+  <polygon class="gateway-mark" points="1390,475 1400,492 1380,492" />
+  <text class="label" x="1390" y="544" text-anchor="middle">Visit or cancellation?</text>
+  <path class="flow" d="M1320 486 H1360" />
+
+  <!-- Cancellation branch -->
+  <circle class="event" cx="1485" cy="170" r="22" />
+  <rect class="message" x="1473" y="163" width="24" height="15" />
+  <path class="message" d="M1473 163 L1485 172 L1497 163" />
+  <text class="small" x="1485" y="211" text-anchor="middle">Cancellation requested</text>
+  <path class="flow" d="M1390 456 V170 H1463" />
+
+  <rect class="task" x="1540" y="305" width="170" height="82" rx="12" />
+  <text class="task-label" x="1625" y="337"><tspan x="1625">Verify patient owns</tspan><tspan x="1625" dy="22">appointment</tspan></text>
+  <path class="flow" d="M1507 170 H1520 V346 H1540" />
+
+  <rect class="task" x="1750" y="305" width="150" height="82" rx="12" />
+  <text class="task-label" x="1825" y="337"><tspan x="1825">Delete</tspan><tspan x="1825" dy="22">appointment</tspan></text>
+  <path class="flow" d="M1710 346 H1750" />
+
+  <rect class="task" x="1940" y="305" width="150" height="82" rx="12" />
+  <text class="task-label" x="2015" y="337"><tspan x="2015">Notify</tspan><tspan x="2015" dy="22">cancellation</tspan></text>
+  <path class="flow" d="M1900 346 H1940" />
+  <circle class="end" cx="2140" cy="346" r="20" />
+  <path class="flow" d="M2090 346 H2120" />
+  <text class="small" x="2140" y="383" text-anchor="middle">Cancelled</text>
+
+  <!-- Visit branch -->
+  <circle class="event" cx="1485" cy="535" r="22" />
+  <circle class="timer" cx="1485" cy="535" r="14" />
+  <path class="timer" d="M1485 523 V535 L1494 541 M1475 535 H1478 M1492 535 H1495" />
+  <text class="small" x="1485" y="578" text-anchor="middle">Appointment time</text>
+  <path class="flow" d="M1390 516 V535 H1463" />
+
+  <rect class="task-doctor" x="1540" y="680" width="170" height="82" rx="12" />
+  <text class="task-label" x="1625" y="724"><tspan x="1625">Conduct consultation</tspan></text>
+  <path class="flow" d="M1507 535 H1520 V721 H1540" />
+
+  <polygon class="gateway-doctor" points="1775,691 1805,721 1775,751 1745,721" />
+  <path class="gateway-mark-doctor" d="M1765 711 L1785 731 M1785 711 L1765 731" />
+  <text class="label" x="1775" y="787" text-anchor="middle">Prescription required?</text>
+  <path class="flow" d="M1710 721 H1745" />
+
+  <!-- No prescription target-state branch -->
+  <rect class="task-target" x="1860" y="415" width="190" height="82" rx="12" />
+  <text class="task-label" x="1955" y="447"><tspan x="1955">Complete appointment</tspan><tspan x="1955" dy="22">without prescription</tspan></text>
+  <path class="flow" d="M1775 691 V456 H1860" />
+  <text class="label" x="1792" y="673">No</text>
+  <rect class="annotation" x="2180" y="105" width="330" height="88" rx="8" />
+  <text class="annotation-text" x="2200" y="131"><tspan x="2200">TARGET-STATE GAP</tspan><tspan x="2200" dy="20">Backend needs explicit completion</tspan><tspan x="2200" dy="20">endpoint when no prescription is needed.</tspan></text>
+  <path class="association" d="M2050 456 H2160 V193 H2180" />
+
+  <!-- Prescription branch -->
+  <rect class="task-doctor" x="1860" y="680" width="190" height="82" rx="12" />
+  <text class="task-label" x="1955" y="710"><tspan x="1955">Prepare medication,</tspan><tspan x="1955" dy="22">dosage, and notes</tspan></text>
+  <path class="flow" d="M1805 721 H1860" />
+  <text class="label" x="1825" y="700">Yes</text>
+
+  <rect class="task" x="2090" y="510" width="180" height="82" rx="12" />
+  <text class="task-label" x="2180" y="541"><tspan x="2180">Verify assigned doctor</tspan><tspan x="2180" dy="22">owns appointment</tspan></text>
+  <path class="flow" d="M2050 721 H2070 V551 H2090" />
+
+  <rect class="task" x="2310" y="510" width="180" height="82" rx="12" />
+  <text class="task-label" x="2400" y="541"><tspan x="2400">Store idempotent</tspan><tspan x="2400" dy="22">prescription document</tspan></text>
+  <path class="flow" d="M2270 551 H2310" />
+
+  <rect class="task" x="2530" y="510" width="160" height="82" rx="12" />
+  <text class="task-label" x="2610" y="541"><tspan x="2610">Mark appointment</tspan><tspan x="2610" dy="22">completed</tspan></text>
+  <path class="flow" d="M2490 551 H2530" />
+
+  <rect class="task" x="2530" y="415" width="160" height="70" rx="12" />
+  <text class="task-label" x="2610" y="443"><tspan x="2610">Make outcome</tspan><tspan x="2610" dy="22">available to patient</tspan></text>
+  <path class="flow" d="M2050 456 H2530" />
+  <path class="flow" d="M2610 510 V485" />
+  <circle class="end" cx="2740" cy="450" r="20" />
+  <path class="flow" d="M2690 450 H2720" />
+  <text class="small" x="2740" y="487" text-anchor="middle">Care completed</text>
+
+  <!-- Data stores and recovery note -->
+  <g transform="translate(1030 555)">
+    <path class="data" d="M0 9 C0 0 70 0 70 9 V48 C70 58 0 58 0 48 Z" />
+    <ellipse class="data" cx="35" cy="9" rx="35" ry="9" />
+    <text class="small" x="35" y="78" text-anchor="middle">MySQL appointments</text>
+  </g>
+  <path class="association" d="M1008 527 L1065 555" />
+
+  <g transform="translate(2365 625)">
+    <path class="data" d="M0 9 C0 0 70 0 70 9 V48 C70 58 0 58 0 48 Z" />
+    <ellipse class="data" cx="35" cy="9" rx="35" ry="9" />
+    <text class="small" x="35" y="78" text-anchor="middle">MongoDB prescriptions</text>
+  </g>
+  <path class="association" d="M2400 592 V625" />
+
+  <rect class="annotation-retry" x="2480" y="635" width="300" height="95" rx="8" />
+  <text class="annotation-text" x="2500" y="662"><tspan x="2500">RECOVERY BOUNDARY</tspan><tspan x="2500" dy="20">Unique appointmentId prevents duplicates.</tspan><tspan x="2500" dy="20">Identical retry repairs MySQL completion.</tspan></text>
+  <path class="association" d="M2610 592 V635" />
+
+  <!-- Legend -->
+  <rect class="task" x="120" y="860" width="34" height="18" rx="4" />
+  <text class="legend" x="165" y="875">Current repository behavior</text>
+  <rect class="task-doctor" x="410" y="860" width="34" height="18" rx="4" />
+  <text class="legend" x="455" y="875">Doctor user task</text>
+  <rect class="task-target" x="650" y="860" width="34" height="18" rx="4" />
+  <text class="legend" x="695" y="875">Target-state capability gap</text>
+</svg>

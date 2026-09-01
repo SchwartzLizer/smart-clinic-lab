@@ -13,8 +13,9 @@ Smart Clinic is a Spring Boot clinic-management portfolio project with a browser
 | API contract and errors | OpenAPI/Swagger UI for local demo use and RFC 9457 `ProblemDetail` responses |
 | Testing and delivery checks | Maven unit/MVC and Testcontainers tests, frontend lint/tests, Docker image build, GitHub Actions |
 | Release and cloud readiness | [`docs/deployment/release-readiness.md`](docs/deployment/release-readiness.md) and [`cloud/README.md`](cloud/README.md) |
+| BPMN process design | Importable BPMN 2.0 model and portfolio SVG in [`docs/bpmn/`](docs/bpmn/) |
 
-No Camunda workflow or Domain-Driven Design implementation is claimed.
+The BPMN model is a design artifact. No Camunda runtime integration or Domain-Driven Design implementation is claimed.
 
 ## Course baseline and portfolio upgrades
 

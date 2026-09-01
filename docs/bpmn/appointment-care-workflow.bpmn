@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_SmartClinic"
+                  targetNamespace="https://github.com/SchwartzLizer/smart-clinic-lab/bpmn">
+  <bpmn:message id="Message_CancelAppointment" name="Cancellation requested" />
+  <bpmn:dataStore id="DataStore_MySQL" name="MySQL" />
+  <bpmn:dataStore id="DataStore_MongoDB" name="MongoDB" />
+
+  <bpmn:process id="Process_AppointmentCare" name="Smart Clinic appointment care" isExecutable="false">
+    <bpmn:documentation>
+      Target-state design mapped to the current Smart Clinic portfolio. It is importable into a BPMN 2.0 modeler,
+      but it does not claim a deployed Camunda process engine or executable worker bindings.
+    </bpmn:documentation>
+
+    <bpmn:laneSet id="LaneSet_AppointmentCare">
+      <bpmn:lane id="Lane_Patient" name="Patient">
+        <bpmn:flowNodeRef>Start_NeedAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SelectDoctorSlot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cancellation</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Platform" name="Smart Clinic Platform">
+        <bpmn:flowNodeRef>Task_AuthenticatePatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ValidateSlot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_SlotAvailable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyUnavailable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_NotBooked</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendConfirmation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_WaitForVisit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_AppointmentTime</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ValidateCancellation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CancelAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyCancellation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Cancelled</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CompleteWithoutPrescription</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_VerifyDoctorOwnership</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_StorePrescription</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CompleteAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NotifyOutcome</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_CareCompleted</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Doctor" name="Doctor">
+        <bpmn:flowNodeRef>Task_ConductConsultation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PrescriptionRequired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PreparePrescription</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="Start_NeedAppointment" name="Appointment needed">
+      <bpmn:outgoing>Flow_Start_Select</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_SelectDoctorSlot" name="Select doctor and future slot">
+      <bpmn:incoming>Flow_Start_Select</bpmn:incoming>
+      <bpmn:outgoing>Flow_Select_Authenticate</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_AuthenticatePatient" name="Authenticate patient and resolve identity">
+      <bpmn:incoming>Flow_Select_Authenticate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Authenticate_Validate</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_ValidateSlot" name="Validate doctor, availability, and slot conflict">
+      <bpmn:incoming>Flow_Authenticate_Validate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Validate_SlotGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_SlotAvailable" name="Slot available?" default="Flow_SlotUnavailable">
+      <bpmn:incoming>Flow_Validate_SlotGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_SlotAvailable</bpmn:outgoing>
+      <bpmn:outgoing>Flow_SlotUnavailable</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:sendTask id="Task_NotifyUnavailable" name="Return conflict and alternative slots">
+      <bpmn:incoming>Flow_SlotUnavailable</bpmn:incoming>
+      <bpmn:outgoing>Flow_Unavailable_End</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="End_NotBooked" name="Not booked">
+      <bpmn:incoming>Flow_Unavailable_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:serviceTask id="Task_CreateAppointment" name="Persist scheduled appointment">
+      <bpmn:incoming>Flow_SlotAvailable</bpmn:incoming>
+      <bpmn:outgoing>Flow_Create_Confirm</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_SendConfirmation" name="Confirm booking to patient and doctor">
+      <bpmn:incoming>Flow_Create_Confirm</bpmn:incoming>
+      <bpmn:outgoing>Flow_Confirm_Wait</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:eventBasedGateway id="Gateway_WaitForVisit" name="Visit or cancellation?">
+      <bpmn:incoming>Flow_Confirm_Wait</bpmn:incoming>
+      <bpmn:outgoing>Flow_Wait_Cancellation</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Wait_AppointmentTime</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+
+    <bpmn:intermediateCatchEvent id="Catch_Cancellation" name="Cancellation requested">
+      <bpmn:incoming>Flow_Wait_Cancellation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Cancellation_Validate</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="Message_CancelAppointment" />
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:serviceTask id="Task_ValidateCancellation" name="Verify patient owns appointment">
+      <bpmn:incoming>Flow_Cancellation_Validate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Validate_Cancel</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_CancelAppointment" name="Delete appointment">
+      <bpmn:incoming>Flow_Validate_Cancel</bpmn:incoming>
+      <bpmn:outgoing>Flow_Cancel_Notify</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_NotifyCancellation" name="Notify cancellation">
+      <bpmn:incoming>Flow_Cancel_Notify</bpmn:incoming>
+      <bpmn:outgoing>Flow_NotifyCancel_End</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="End_Cancelled" name="Appointment cancelled">
+      <bpmn:incoming>Flow_NotifyCancel_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:intermediateCatchEvent id="Catch_AppointmentTime" name="Appointment time reached">
+      <bpmn:incoming>Flow_Wait_AppointmentTime</bpmn:incoming>
+      <bpmn:outgoing>Flow_Time_Consultation</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDate xsi:type="bpmn:tFormalExpression">${appointmentTime}</bpmn:timeDate>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:userTask id="Task_ConductConsultation" name="Conduct consultation">
+      <bpmn:incoming>Flow_Time_Consultation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Consultation_PrescriptionGateway</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_PrescriptionRequired" name="Prescription required?" default="Flow_NoPrescription">
+      <bpmn:incoming>Flow_Consultation_PrescriptionGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_NoPrescription</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PrescriptionRequired</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_CompleteWithoutPrescription" name="Complete appointment without prescription">
+      <bpmn:incoming>Flow_NoPrescription</bpmn:incoming>
+      <bpmn:outgoing>Flow_NoPrescription_Notify</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="Task_PreparePrescription" name="Prepare medication, dosage, and notes">
+      <bpmn:incoming>Flow_PrescriptionRequired</bpmn:incoming>
+      <bpmn:outgoing>Flow_Prepare_VerifyDoctor</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_VerifyDoctorOwnership" name="Verify assigned doctor owns appointment">
+      <bpmn:incoming>Flow_Prepare_VerifyDoctor</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifyDoctor_Store</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_StorePrescription" name="Store idempotent prescription document">
+      <bpmn:incoming>Flow_VerifyDoctor_Store</bpmn:incoming>
+      <bpmn:outgoing>Flow_Store_Complete</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_CompleteAppointment" name="Mark appointment completed">
+      <bpmn:incoming>Flow_Store_Complete</bpmn:incoming>
+      <bpmn:outgoing>Flow_Complete_Notify</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_NotifyOutcome" name="Make outcome available to patient">
+      <bpmn:incoming>Flow_NoPrescription_Notify</bpmn:incoming>
+      <bpmn:incoming>Flow_Complete_Notify</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notify_End</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:endEvent id="End_CareCompleted" name="Care visit completed">
+      <bpmn:incoming>Flow_Notify_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:dataStoreReference id="DataRef_MySQL" name="MySQL appointments" dataStoreRef="DataStore_MySQL" />
+    <bpmn:dataStoreReference id="DataRef_MongoDB" name="MongoDB prescriptions" dataStoreRef="DataStore_MongoDB" />
+
+    <bpmn:textAnnotation id="Annotation_TargetState">
+      <bpmn:text>Target-state gap: current backend needs an explicit completion endpoint when no prescription is required.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Annotation_RetryBoundary">
+      <bpmn:text>Recovery boundary: appointmentId is unique in MongoDB. An identical retry repairs the MySQL completion update.</bpmn:text>
+    </bpmn:textAnnotation>
+
+    <bpmn:association id="Association_Create_MySQL" sourceRef="Task_CreateAppointment" targetRef="DataRef_MySQL" associationDirection="One" />
+    <bpmn:association id="Association_Store_MongoDB" sourceRef="Task_StorePrescription" targetRef="DataRef_MongoDB" associationDirection="One" />
+    <bpmn:association id="Association_TargetState" sourceRef="Task_CompleteWithoutPrescription" targetRef="Annotation_TargetState" />
+    <bpmn:association id="Association_RetryBoundary" sourceRef="Task_CompleteAppointment" targetRef="Annotation_RetryBoundary" />
+
+    <bpmn:sequenceFlow id="Flow_Start_Select" sourceRef="Start_NeedAppointment" targetRef="Task_SelectDoctorSlot" />
+    <bpmn:sequenceFlow id="Flow_Select_Authenticate" sourceRef="Task_SelectDoctorSlot" targetRef="Task_AuthenticatePatient" />
+    <bpmn:sequenceFlow id="Flow_Authenticate_Validate" sourceRef="Task_AuthenticatePatient" targetRef="Task_ValidateSlot" />
+    <bpmn:sequenceFlow id="Flow_Validate_SlotGateway" sourceRef="Task_ValidateSlot" targetRef="Gateway_SlotAvailable" />
+    <bpmn:sequenceFlow id="Flow_SlotAvailable" name="Yes" sourceRef="Gateway_SlotAvailable" targetRef="Task_CreateAppointment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${slotAvailable}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_SlotUnavailable" name="No" sourceRef="Gateway_SlotAvailable" targetRef="Task_NotifyUnavailable" />
+    <bpmn:sequenceFlow id="Flow_Unavailable_End" sourceRef="Task_NotifyUnavailable" targetRef="End_NotBooked" />
+    <bpmn:sequenceFlow id="Flow_Create_Confirm" sourceRef="Task_CreateAppointment" targetRef="Task_SendConfirmation" />
+    <bpmn:sequenceFlow id="Flow_Confirm_Wait" sourceRef="Task_SendConfirmation" targetRef="Gateway_WaitForVisit" />
+    <bpmn:sequenceFlow id="Flow_Wait_Cancellation" sourceRef="Gateway_WaitForVisit" targetRef="Catch_Cancellation" />
+    <bpmn:sequenceFlow id="Flow_Wait_AppointmentTime" sourceRef="Gateway_WaitForVisit" targetRef="Catch_AppointmentTime" />
+    <bpmn:sequenceFlow id="Flow_Cancellation_Validate" sourceRef="Catch_Cancellation" targetRef="Task_ValidateCancellation" />
+    <bpmn:sequenceFlow id="Flow_Validate_Cancel" sourceRef="Task_ValidateCancellation" targetRef="Task_CancelAppointment" />
+    <bpmn:sequenceFlow id="Flow_Cancel_Notify" sourceRef="Task_CancelAppointment" targetRef="Task_NotifyCancellation" />
+    <bpmn:sequenceFlow id="Flow_NotifyCancel_End" sourceRef="Task_NotifyCancellation" targetRef="End_Cancelled" />
+    <bpmn:sequenceFlow id="Flow_Time_Consultation" sourceRef="Catch_AppointmentTime" targetRef="Task_ConductConsultation" />
+    <bpmn:sequenceFlow id="Flow_Consultation_PrescriptionGateway" sourceRef="Task_ConductConsultation" targetRef="Gateway_PrescriptionRequired" />
+    <bpmn:sequenceFlow id="Flow_NoPrescription" name="No" sourceRef="Gateway_PrescriptionRequired" targetRef="Task_CompleteWithoutPrescription" />
+    <bpmn:sequenceFlow id="Flow_PrescriptionRequired" name="Yes" sourceRef="Gateway_PrescriptionRequired" targetRef="Task_PreparePrescription">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${prescriptionRequired}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_NoPrescription_Notify" sourceRef="Task_CompleteWithoutPrescription" targetRef="Task_NotifyOutcome" />
+    <bpmn:sequenceFlow id="Flow_Prepare_VerifyDoctor" sourceRef="Task_PreparePrescription" targetRef="Task_VerifyDoctorOwnership" />
+    <bpmn:sequenceFlow id="Flow_VerifyDoctor_Store" sourceRef="Task_VerifyDoctorOwnership" targetRef="Task_StorePrescription" />
+    <bpmn:sequenceFlow id="Flow_Store_Complete" sourceRef="Task_StorePrescription" targetRef="Task_CompleteAppointment" />
+    <bpmn:sequenceFlow id="Flow_Complete_Notify" sourceRef="Task_CompleteAppointment" targetRef="Task_NotifyOutcome" />
+    <bpmn:sequenceFlow id="Flow_Notify_End" sourceRef="Task_NotifyOutcome" targetRef="End_CareCompleted" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_AppointmentCare">
+    <bpmndi:BPMNPlane id="BPMNPlane_AppointmentCare" bpmnElement="Process_AppointmentCare">
+      <bpmndi:BPMNShape id="Process_AppointmentCare_di" bpmnElement="Process_AppointmentCare" isHorizontal="true">
+        <dc:Bounds x="30" y="30" width="2770" height="820" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Patient_di" bpmnElement="Lane_Patient" isHorizontal="true">
+        <dc:Bounds x="60" y="30" width="2740" height="220" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Platform_di" bpmnElement="Lane_Platform" isHorizontal="true">
+        <dc:Bounds x="60" y="250" width="2740" height="350" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Doctor_di" bpmnElement="Lane_Doctor" isHorizontal="true">
+        <dc:Bounds x="60" y="600" width="2740" height="250" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Start_NeedAppointment_di" bpmnElement="Start_NeedAppointment">
+        <dc:Bounds x="100" y="120" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SelectDoctorSlot_di" bpmnElement="Task_SelectDoctorSlot">
+        <dc:Bounds x="180" y="95" width="150" height="86" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AuthenticatePatient_di" bpmnElement="Task_AuthenticatePatient">
+        <dc:Bounds x="380" y="375" width="160" height="86" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ValidateSlot_di" bpmnElement="Task_ValidateSlot">
+        <dc:Bounds x="590" y="375" width="170" height="86" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_SlotAvailable_di" bpmnElement="Gateway_SlotAvailable" isMarkerVisible="true">
+        <dc:Bounds x="810" y="393" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NotifyUnavailable_di" bpmnElement="Task_NotifyUnavailable">
+        <dc:Bounds x="900" y="280" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_NotBooked_di" bpmnElement="End_NotBooked">
+        <dc:Bounds x="1100" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateAppointment_di" bpmnElement="Task_CreateAppointment">
+        <dc:Bounds x="900" y="430" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SendConfirmation_di" bpmnElement="Task_SendConfirmation">
+        <dc:Bounds x="1100" y="430" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_WaitForVisit_di" bpmnElement="Gateway_WaitForVisit" isMarkerVisible="true">
+        <dc:Bounds x="1320" y="445" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_Cancellation_di" bpmnElement="Catch_Cancellation">
+        <dc:Bounds x="1430" y="120" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ValidateCancellation_di" bpmnElement="Task_ValidateCancellation">
+        <dc:Bounds x="1510" y="280" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CancelAppointment_di" bpmnElement="Task_CancelAppointment">
+        <dc:Bounds x="1710" y="280" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NotifyCancellation_di" bpmnElement="Task_NotifyCancellation">
+        <dc:Bounds x="1900" y="280" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Cancelled_di" bpmnElement="End_Cancelled">
+        <dc:Bounds x="2090" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_AppointmentTime_di" bpmnElement="Catch_AppointmentTime">
+        <dc:Bounds x="1430" y="500" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ConductConsultation_di" bpmnElement="Task_ConductConsultation">
+        <dc:Bounds x="1510" y="680" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PrescriptionRequired_di" bpmnElement="Gateway_PrescriptionRequired" isMarkerVisible="true">
+        <dc:Bounds x="1720" y="695" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CompleteWithoutPrescription_di" bpmnElement="Task_CompleteWithoutPrescription">
+        <dc:Bounds x="1840" y="390" width="175" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PreparePrescription_di" bpmnElement="Task_PreparePrescription">
+        <dc:Bounds x="1840" y="680" width="175" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VerifyDoctorOwnership_di" bpmnElement="Task_VerifyDoctorOwnership">
+        <dc:Bounds x="2050" y="500" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_StorePrescription_di" bpmnElement="Task_StorePrescription">
+        <dc:Bounds x="2260" y="500" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CompleteAppointment_di" bpmnElement="Task_CompleteAppointment">
+        <dc:Bounds x="2470" y="500" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NotifyOutcome_di" bpmnElement="Task_NotifyOutcome">
+        <dc:Bounds x="2470" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_CareCompleted_di" bpmnElement="End_CareCompleted">
+        <dc:Bounds x="2670" y="412" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataRef_MySQL_di" bpmnElement="DataRef_MySQL">
+        <dc:Bounds x="1130" y="535" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataRef_MongoDB_di" bpmnElement="DataRef_MongoDB">
+        <dc:Bounds x="2320" y="615" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_TargetState_di" bpmnElement="Annotation_TargetState">
+        <dc:Bounds x="2140" y="95" width="310" height="75" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_RetryBoundary_di" bpmnElement="Annotation_RetryBoundary">
+        <dc:Bounds x="2440" y="615" width="300" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_Start_Select_di" bpmnElement="Flow_Start_Select"><di:waypoint x="136" y="138" /><di:waypoint x="180" y="138" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Select_Authenticate_di" bpmnElement="Flow_Select_Authenticate"><di:waypoint x="330" y="138" /><di:waypoint x="350" y="138" /><di:waypoint x="350" y="418" /><di:waypoint x="380" y="418" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Authenticate_Validate_di" bpmnElement="Flow_Authenticate_Validate"><di:waypoint x="540" y="418" /><di:waypoint x="590" y="418" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Validate_SlotGateway_di" bpmnElement="Flow_Validate_SlotGateway"><di:waypoint x="760" y="418" /><di:waypoint x="810" y="418" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SlotUnavailable_di" bpmnElement="Flow_SlotUnavailable"><di:waypoint x="835" y="393" /><di:waypoint x="835" y="320" /><di:waypoint x="900" y="320" /><bpmndi:BPMNLabel><dc:Bounds x="845" y="295" width="22" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Unavailable_End_di" bpmnElement="Flow_Unavailable_End"><di:waypoint x="1060" y="320" /><di:waypoint x="1100" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SlotAvailable_di" bpmnElement="Flow_SlotAvailable"><di:waypoint x="835" y="443" /><di:waypoint x="835" y="470" /><di:waypoint x="900" y="470" /><bpmndi:BPMNLabel><dc:Bounds x="846" y="449" width="24" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Create_Confirm_di" bpmnElement="Flow_Create_Confirm"><di:waypoint x="1060" y="470" /><di:waypoint x="1100" y="470" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Confirm_Wait_di" bpmnElement="Flow_Confirm_Wait"><di:waypoint x="1270" y="470" /><di:waypoint x="1320" y="470" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Wait_Cancellation_di" bpmnElement="Flow_Wait_Cancellation"><di:waypoint x="1345" y="445" /><di:waypoint x="1345" y="138" /><di:waypoint x="1430" y="138" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Cancellation_Validate_di" bpmnElement="Flow_Cancellation_Validate"><di:waypoint x="1466" y="138" /><di:waypoint x="1485" y="138" /><di:waypoint x="1485" y="320" /><di:waypoint x="1510" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Validate_Cancel_di" bpmnElement="Flow_Validate_Cancel"><di:waypoint x="1670" y="320" /><di:waypoint x="1710" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Cancel_Notify_di" bpmnElement="Flow_Cancel_Notify"><di:waypoint x="1860" y="320" /><di:waypoint x="1900" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NotifyCancel_End_di" bpmnElement="Flow_NotifyCancel_End"><di:waypoint x="2050" y="320" /><di:waypoint x="2090" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Wait_AppointmentTime_di" bpmnElement="Flow_Wait_AppointmentTime"><di:waypoint x="1345" y="495" /><di:waypoint x="1345" y="518" /><di:waypoint x="1430" y="518" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Time_Consultation_di" bpmnElement="Flow_Time_Consultation"><di:waypoint x="1466" y="518" /><di:waypoint x="1485" y="518" /><di:waypoint x="1485" y="720" /><di:waypoint x="1510" y="720" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Consultation_PrescriptionGateway_di" bpmnElement="Flow_Consultation_PrescriptionGateway"><di:waypoint x="1670" y="720" /><di:waypoint x="1720" y="720" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NoPrescription_di" bpmnElement="Flow_NoPrescription"><di:waypoint x="1745" y="695" /><di:waypoint x="1745" y="430" /><di:waypoint x="1840" y="430" /><bpmndi:BPMNLabel><dc:Bounds x="1760" y="410" width="22" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PrescriptionRequired_di" bpmnElement="Flow_PrescriptionRequired"><di:waypoint x="1770" y="720" /><di:waypoint x="1840" y="720" /><bpmndi:BPMNLabel><dc:Bounds x="1790" y="699" width="24" height="16" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_NoPrescription_Notify_di" bpmnElement="Flow_NoPrescription_Notify"><di:waypoint x="2015" y="430" /><di:waypoint x="2470" y="430" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Prepare_VerifyDoctor_di" bpmnElement="Flow_Prepare_VerifyDoctor"><di:waypoint x="2015" y="720" /><di:waypoint x="2035" y="720" /><di:waypoint x="2035" y="540" /><di:waypoint x="2050" y="540" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifyDoctor_Store_di" bpmnElement="Flow_VerifyDoctor_Store"><di:waypoint x="2220" y="540" /><di:waypoint x="2260" y="540" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Store_Complete_di" bpmnElement="Flow_Store_Complete"><di:waypoint x="2430" y="540" /><di:waypoint x="2470" y="540" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Complete_Notify_di" bpmnElement="Flow_Complete_Notify"><di:waypoint x="2545" y="500" /><di:waypoint x="2545" y="470" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notify_End_di" bpmnElement="Flow_Notify_End"><di:waypoint x="2620" y="430" /><di:waypoint x="2670" y="430" /></bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Association_Create_MySQL_di" bpmnElement="Association_Create_MySQL"><di:waypoint x="980" y="510" /><di:waypoint x="1130" y="560" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Store_MongoDB_di" bpmnElement="Association_Store_MongoDB"><di:waypoint x="2345" y="580" /><di:waypoint x="2345" y="615" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_TargetState_di" bpmnElement="Association_TargetState"><di:waypoint x="2015" y="430" /><di:waypoint x="2160" y="430" /><di:waypoint x="2160" y="170" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_RetryBoundary_di" bpmnElement="Association_RetryBoundary"><di:waypoint x="2545" y="580" /><di:waypoint x="2590" y="615" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
