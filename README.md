@@ -1,26 +1,26 @@
 # Smart Clinic Spring Boot Portfolio
 
-Smart Clinic is a small clinic-management backend and browser demo. It turns the original Coursera Java capstone into a portfolio project that demonstrates authentication, authorization, relational/document persistence, API contracts, and reproducible delivery.
+Smart Clinic is a Spring Boot clinic-management portfolio project with a browser demo. It extends a Coursera Java capstone into a demonstrable backend application; it is course and portfolio evidence, not commercial healthcare experience.
 
-## Product problem
+## What this repository demonstrates
 
-Clinics need one workflow for finding doctors, booking visits, and recording prescriptions without exposing another patient's data. The application supports three roles:
+| Java backend capability | Repository evidence |
+| --- | --- |
+| Spring Boot REST APIs | Controllers and API examples in [`app/`](app) and [`docs/api-examples.md`](docs/api-examples.md) |
+| Authentication and role flows | Stateless JWT authentication, BCrypt password hashing, role and ownership checks for Admin, Doctor, and Patient |
+| Relational persistence | Spring Data JPA, MySQL 8.4, and Flyway migrations/procedures |
+| Document persistence | MongoDB prescription documents linked to MySQL appointments |
+| API contract and errors | OpenAPI/Swagger UI for local demo use and RFC 9457 `ProblemDetail` responses |
+| Testing and delivery checks | Maven unit/MVC and Testcontainers tests, frontend lint/tests, Docker image build, GitHub Actions |
+| Release and cloud readiness | [`docs/deployment/release-readiness.md`](docs/deployment/release-readiness.md) and [`cloud/README.md`](cloud/README.md) |
 
-- `ADMIN` manages the doctor directory.
-- `DOCTOR` sees assigned appointments and records prescriptions.
-- `PATIENT` manages their profile and own appointments.
+No Camunda workflow or Domain-Driven Design implementation is claimed.
 
-## Portfolio capabilities
+## Course baseline and portfolio upgrades
 
-- Spring Security stateless JWT authentication with BCrypt password hashes.
-- Role and ownership checks in the service layer, not only in controllers.
-- DTO validation and RFC 9457 `ProblemDetail` errors.
-- Flyway-managed MySQL schema, procedures, and safe local demo data.
-- MongoDB prescription documents linked to MySQL appointments.
-- Paginated/filterable doctor directory.
-- OpenAPI 3 contract and Swagger UI for local/demo use; both are disabled in the cloud profile.
-- Actuator health, liveness, readiness, and correlation IDs.
-- Unit, MVC, Testcontainers integration, JavaScript, HTML, CSS, Checkstyle, and Hadolint checks.
+The Coursera/IBM lab baseline supplies Java packaged-application context, assignment answers, and SQL artifacts. Those source materials remain in [`ASSIGNMENT-ANSWERS.md`](ASSIGNMENT-ANSWERS.md), [`database/`](database), and Git history.
+
+Portfolio work in this repository adds authenticated role flows, DTO validation, authorization-aware services, MySQL/Flyway and MongoDB integration, an OpenAPI contract, health/readiness endpoints, Docker Compose, automated checks, release-readiness guidance, and a browser-based demo. These are repository artifacts, not claims about prior employment.
 
 ## Stack and architecture
 
@@ -36,41 +36,30 @@ flowchart LR
     API --> Ops[Actuator + correlation ID]
 ```
 
-```mermaid
-erDiagram
-    ADMIN ||--o{ DOCTOR : manages
-    DOCTOR ||--o{ APPOINTMENT : receives
-    PATIENT ||--o{ APPOINTMENT : books
-    APPOINTMENT ||--o| PRESCRIPTION : produces
-```
+The request/data flow and module responsibilities are in [`docs/architecture.md`](docs/architecture.md).
 
-The request/data flow and module responsibilities are documented in [`docs/architecture.md`](docs/architecture.md).
+## Run local demo
 
-## Run locally for free
-
-Requirements: Docker Desktop, Git, and (for non-container commands) Java 17 and Node.js 20+.
-
-PowerShell:
+Requirements: Docker Desktop and Git. Java 17 and Node.js 20+ are needed for non-container verification commands.
 
 ```powershell
 Copy-Item .env.example .env
 docker compose up --build --wait
 ```
 
-Bash:
+Open `http://localhost:8080` when Compose reports healthy. Committed `.env.example` values are disposable local-demo values; never use them for shared or cloud deployment, and never commit `.env`.
 
-```bash
-cp .env.example .env
-docker compose up --build --wait
+On this Windows host, an isolated local run passed after a first-start Flyway/MySQL connection race. If readiness does not converge on first start, wait until MySQL is healthy, then recreate only application service:
+
+```powershell
+docker compose up --build --wait app
 ```
 
-The application is then available at `http://localhost:8080`. Compose starts MySQL, MongoDB, and the application; health checks wait for all dependencies. Stop it with `docker compose down` (add `--volumes` when you intentionally want a fresh database).
+This recovery preserves database volumes. Use `docker compose down` to stop stack; add `--volumes` only when intentionally starting with empty local data.
 
-The committed `.env.example` values are local-only demo values. Replace every value before any shared or cloud deployment, and never commit `.env`.
+### Safe demo accounts
 
-## Safe local demo accounts
-
-The `demo` profile seeds accounts with BCrypt hashes. The public local password is `password` only for this disposable demo database:
+`demo` profile seeds disposable accounts. Password `password` is public only for this local database.
 
 | Role | Username/email |
 | --- | --- |
@@ -78,19 +67,21 @@ The `demo` profile seeds accounts with BCrypt hashes. The public local password 
 | Doctor | `dr.adams@example.com` |
 | Patient | `jane.doe@example.com` |
 
-Use a clean local volume when repeating the demo. Do not use these credentials for real data.
+Do not use these accounts or values with real data.
 
-## Demo workflow
+## Interviewer walkthrough
 
-1. Open the landing page and sign in to the Admin portal.
-2. Create a doctor with AM/PM availability.
-3. Open the Patient portal, register/sign in, filter the doctor directory, and book a future slot.
-4. Sign in to the Doctor portal, view the assigned appointment, and create a prescription.
-5. Use Swagger UI locally to inspect the same bearer-authenticated contract. It is disabled in the cloud profile.
+1. Open landing page and sign in to Admin portal.
+2. Create or inspect doctor with AM/PM availability.
+3. Use Patient portal to register/sign in, filter doctors, and book future slot.
+4. Use Doctor portal to view appointment and submit prescription.
+5. Inspect bearer-authenticated API routes in local Swagger UI.
 
-## API contract
+Independent runtime verification observed persistent prescription-submit success with synthetic data. Swagger UI is intentionally disabled in cloud profile.
 
-Modern routes accept `Authorization: Bearer <JWT>` headers; tokens are not part of URLs. Copy-ready requests are in [`docs/api-examples.md`](docs/api-examples.md).
+## API and operational endpoints
+
+Copy-ready authenticated requests are in [`docs/api-examples.md`](docs/api-examples.md). Modern routes use `Authorization: Bearer <JWT>` headers; tokens are never accepted in URLs.
 
 | Area | Routes |
 | --- | --- |
@@ -100,43 +91,59 @@ Modern routes accept `Authorization: Bearer <JWT>` headers; tokens are not part 
 | Appointments | `GET/POST /api/appointments`, patient `PUT/DELETE /api/appointments/{id}` |
 | Prescriptions | doctor `POST /api/prescriptions`, doctor/patient `GET /api/prescriptions/{appointmentId}` |
 
-`ProblemDetail` responses consistently carry status, title, detail, instance, timestamp, and validation-field errors where applicable.
+Local/demo endpoints: `http://localhost:8080/swagger-ui.html`, `/v3/api-docs`, `/actuator/health/liveness`, and `/actuator/health/readiness`.
 
-## Verification commands
+## Verification evidence
+
+Latest reviewed evidence includes healthy isolated Compose stack and readiness endpoint, synthetic guest/admin/patient/doctor browser journey, prescription submission, Swagger rendering, frontend lint plus 18 frontend tests, and post-merge GitHub Actions checks for backend verification, frontend verification, Docker image build, and frontend lint.
+
+Focused Testcontainers reports in this checkout show `MongoPrescriptionIT` (3 tests), `MySqlMigrationIT` (2 tests), and `PrescriptionCrossStoreIT` (4 tests) passing. `SmartClinicApiIT` remains unverified on this Windows/JDK host because its Testcontainers application process could not bind loopback listener (ENV-001); it is not claimed as passing.
+
+Run available checks locally:
 
 ```powershell
 Set-Location app
-.\mvnw.cmd clean verify       # unit/MVC, Checkstyle, JaCoCo >= 70%; IT needs Docker
+.\mvnw.cmd clean verify       # unit/MVC, Checkstyle, JaCoCo; IT needs Docker
 Set-Location ..
 npm ci
 npm run verify:frontend       # ESLint, HTMLHint, Stylelint, node:test
 docker build --file app/Dockerfile --tag smart-clinic:local app
 ```
 
-Local/demo runtime endpoints:
+## Screenshot evidence
 
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-- Liveness: `http://localhost:8080/actuator/health/liveness`
-- Readiness: `http://localhost:8080/actuator/health/readiness`
+All images below are real local-demo or GitHub Actions captures, visually reviewed and sanitized. They use synthetic demo data only. Full capture inventory and redaction policy: [`docs/screenshots/README.md`](docs/screenshots/README.md).
 
-Latest verified checks: Java unit/MVC suite 93/93; frontend lint/tests 8/8; `MongoPrescriptionIT` 3/3; `MySqlMigrationIT` 2/2; and `PrescriptionCrossStoreIT` 4/4. `SmartClinicApiIT` was not completed on this Windows/JDK host because its Testcontainers application process could not bind its loopback listener (ENV-001); it is not reported as passing.
+| Evidence | Capture |
+| --- | --- |
+| Landing and login | [landing-login.png](docs/screenshots/landing-login.png) |
+| Admin dashboard | [admin-dashboard.png](docs/screenshots/admin-dashboard.png) |
+| Doctor search | [doctor-search.png](docs/screenshots/doctor-search.png) |
+| Patient appointment booking | [appointment-flow.png](docs/screenshots/appointment-flow.png) |
+| Doctor Portal scheduled-appointment table | [doctor-dashboard.png](docs/screenshots/doctor-dashboard.png) |
+| Local OpenAPI/Swagger UI | [swagger-ui.png](docs/screenshots/swagger-ui.png) |
+| Post-merge GitHub Actions checks | [github-actions.png](docs/screenshots/github-actions.png) |
 
-## Security decisions and trade-offs
+<p>
+  <a href="docs/screenshots/landing-login.png"><img src="docs/screenshots/landing-login.png" width="240" alt="Smart Clinic landing and login"></a>
+  <a href="docs/screenshots/admin-dashboard.png"><img src="docs/screenshots/admin-dashboard.png" width="240" alt="Admin dashboard"></a>
+  <a href="docs/screenshots/doctor-search.png"><img src="docs/screenshots/doctor-search.png" width="240" alt="Patient doctor search"></a>
+  <a href="docs/screenshots/appointment-flow.png"><img src="docs/screenshots/appointment-flow.png" width="240" alt="Patient appointment booking"></a>
+  <a href="docs/screenshots/doctor-dashboard.png"><img src="docs/screenshots/doctor-dashboard.png" width="240" alt="Doctor Portal scheduled-appointment table"></a>
+  <a href="docs/screenshots/swagger-ui.png"><img src="docs/screenshots/swagger-ui.png" width="240" alt="Swagger UI"></a>
+  <a href="docs/screenshots/github-actions.png"><img src="docs/screenshots/github-actions.png" width="240" alt="GitHub Actions checks"></a>
+</p>
 
-- Passwords are BCrypt encoded at registration/seed time and excluded from response DTOs.
-- JWTs carry account ID, subject, role, issued-at, and expiry; the signing secret is environment-backed and must be at least 32 UTF-8 bytes.
-- Sessions, form login, and HTTP Basic are disabled for the API; the filter chain is stateless.
-- Ownership is rechecked against persisted appointment relationships for every patient/doctor operation.
-- Prescriptions live in MongoDB while appointments/status live in MySQL. There is no cross-database atomic transaction: creation writes MongoDB first and then completes the appointment. A new request returns `201`; an identical retry returns `200` and repairs a missing completion update; reuse of an appointment ID with different prescription content returns `409`.
-- Legacy controller mappings have been removed. The frontend and protected API calls use bearer headers; tokens are never accepted in URLs.
+## Cloud deployment: optional, not performed
 
-## Free deployment
+Original Coursera lab uses IBM Skills Network, Docker, and GitHub Actions; it does not require public-cloud deployment. Repository includes optional, user-operated cloud guide for Render Free + Aiven Free MySQL + MongoDB Atlas Free: [`cloud/README.md`](cloud/README.md).
 
-The intended zero-cost topology is Render Free (Docker web service) + Aiven Free MySQL + MongoDB Atlas M0. The `cloud` profile requires separate runtime and Flyway database identities, plus cloud-only environment values validated at startup. Provider accounts, network allowlists, secret entry, deployment, and identity bootstrap remain user-controlled and were not performed in this repository run. See [`render.yaml`](render.yaml) and [`docs/deployment/free-tier-runbook.md`](docs/deployment/free-tier-runbook.md) for the setup sequence and limitations.
+No provider account, secret, network rule, cloud identity, live URL, or public deployment was created or validated in this run. Guide is for synthetic demo data only and makes no production, SLA, or healthcare-compliance claim.
 
-Free tiers can sleep, cold-start, have small storage/connection limits, and are not a production SLA. No healthcare-compliance claim is made, and only synthetic demo data belongs here.
+## Security decisions and limits
 
-## Evidence and screenshots
-
-The original assignment answers and SQL artifacts remain in [`ASSIGNMENT-ANSWERS.md`](ASSIGNMENT-ANSWERS.md), [`database/`](database), and Git history. Screenshot names and capture rules are listed in [`docs/screenshots/README.md`](docs/screenshots/README.md); no screenshots are claimed until they are actually captured and redacted.
+- Passwords are BCrypt encoded and excluded from response DTOs.
+- JWTs are environment-backed; cloud value must be at least 32 UTF-8 bytes.
+- API sessions, form login, and HTTP Basic are disabled; authorization is rechecked against persisted appointment relationships.
+- Prescriptions are stored in MongoDB while appointment status is stored in MySQL, so no cross-database atomic transaction exists. Retry behavior and conflict handling are tested in `PrescriptionCrossStoreIT`.
+- Application is synthetic-data portfolio demo. It is not production healthcare deployment.

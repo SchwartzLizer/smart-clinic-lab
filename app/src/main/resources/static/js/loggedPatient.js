@@ -3,10 +3,20 @@ import { getDoctors } from './services/doctorServices.js';
 import { createDoctorCard } from './components/doctorCard.js';
 import { filterDoctors } from './services/doctorServices.js';
 import { bookAppointment } from './services/appointmentRecordService.js';
+import { getPatientData } from './services/patientServices.js';
 
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDoctorCards();
+});
+
+window.addEventListener("doctor:selected", async (event) => {
+  try {
+    const patient = await getPatientData();
+    showBookingOverlay(event.detail, patient);
+  } catch (error) {
+    console.error("Failed to start appointment booking:", error);
+  }
 });
 
 function loadDoctorCards() {
@@ -25,11 +35,7 @@ function loadDoctorCards() {
     });
 }
 
-export function showBookingOverlay(e, doctor, patient) {
-  const button = e.target;
-  const rect = button.getBoundingClientRect();
-  console.log(patient.name)
-  console.log(patient)
+export function showBookingOverlay(doctor, patient) {
   const ripple = document.createElement("div");
   ripple.classList.add("ripple-overlay");
   document.body.appendChild(ripple);
@@ -70,7 +76,15 @@ export function showBookingOverlay(e, doctor, patient) {
   confirm.type = "button";
   confirm.className = "confirm-booking";
   confirm.textContent = "Confirm Booking";
-  modalApp.append(heading, ...details, dateInput, timeSelect, confirm);
+  const feedback = document.createElement("p");
+  feedback.className = "booking-status";
+  feedback.setAttribute("role", "status");
+  feedback.setAttribute("aria-live", "polite");
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "btn-secondary";
+  cancel.textContent = "Cancel";
+  modalApp.append(heading, ...details, dateInput, timeSelect, feedback, confirm, cancel);
 
   document.body.appendChild(modalApp);
 
@@ -79,6 +93,10 @@ export function showBookingOverlay(e, doctor, patient) {
   confirm.addEventListener("click", async () => {
     const date = modalApp.querySelector("#appointment-date").value;
     const time = modalApp.querySelector("#appointment-time").value;
+    if (!date || !time) {
+      feedback.textContent = "Choose an appointment date and time.";
+      return;
+    }
     const startTime = time.split('-')[0];
     const appointment = {
       doctor: { id: doctor.id },
@@ -88,17 +106,24 @@ export function showBookingOverlay(e, doctor, patient) {
     };
 
 
+    confirm.disabled = true;
+    feedback.textContent = "Booking appointment…";
     const { success, message } = await bookAppointment(appointment);
 
     if (success) {
-      alert("Appointment Booked successfully");
-      ripple.remove();
-      modalApp.remove();
+      feedback.textContent = "Appointment booked successfully.";
+      confirm.textContent = "Appointment booked";
     } else {
-      alert("❌ Failed to book an appointment :: " + message);
+      confirm.disabled = false;
+      feedback.textContent = "Failed to book appointment: " + message;
     }
   });
+  cancel.addEventListener("click", () => {
+    ripple.remove();
+    modalApp.remove();
+  });
 }
+
 
 
 
