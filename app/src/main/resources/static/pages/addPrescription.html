@@ -25,7 +25,7 @@
             <div class="main-content">
                 <div class="form-container">
                     <h2 id="heading">Add <span>Prescription</span></h2>
-                    <form>
+                    <form id="prescriptionForm">
                         <label for="patientName">Patient Name</label>
                         <input type="text" id="patientName" disabled>
 
@@ -39,6 +39,8 @@
                         <label for="notes">Additional Notes</label>
                         <textarea id="notes" rows="3"
                             placeholder="Any precautions or observations (optional)"></textarea>
+
+                        <p id="prescriptionStatus" class="form-status" role="status" aria-live="polite" hidden></p>
 
                         <button type="submit" class="btn-primary" id="savePrescription">Add Prescription</button>
                         <button type="button" id="cancelPrescription" class="btn-secondary">Cancel</button>
