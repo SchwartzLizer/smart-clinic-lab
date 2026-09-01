@@ -95,7 +95,7 @@ Local/demo endpoints: `http://localhost:8080/swagger-ui.html`, `/v3/api-docs`, `
 
 ## Verification evidence
 
-Latest reviewed evidence includes healthy isolated Compose stack and readiness endpoint, synthetic guest/admin/patient/doctor browser journey, prescription submission, Swagger rendering, frontend lint plus 17 frontend tests, and post-merge GitHub Actions checks for backend verification, frontend verification, Docker image build, and frontend lint.
+Latest reviewed evidence includes healthy isolated Compose stack and readiness endpoint, synthetic guest/admin/patient/doctor browser journey, prescription submission, Swagger rendering, frontend lint plus 18 frontend tests, and post-merge GitHub Actions checks for backend verification, frontend verification, Docker image build, and frontend lint.
 
 Focused Testcontainers reports in this checkout show `MongoPrescriptionIT` (3 tests), `MySqlMigrationIT` (2 tests), and `PrescriptionCrossStoreIT` (4 tests) passing. `SmartClinicApiIT` remains unverified on this Windows/JDK host because its Testcontainers application process could not bind loopback listener (ENV-001); it is not claimed as passing.
 

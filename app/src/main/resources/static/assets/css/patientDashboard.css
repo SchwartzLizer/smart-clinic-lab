@@ -10,17 +10,14 @@
   }
   .ripple-overlay {
     position: fixed;
-    width: 20px;
-    height: 20px;
-    background-color: #1c3745;
-    border-radius: 50%;
+    inset: 0;
+    background-color: rgba(28, 55, 69, 0.55);
     z-index: 9999;
-    transform: translate(-50%, -50%) scale(0);
-    transition: transform 1s ease-out, opacity 1s ease;
+    opacity: 0;
+    transition: opacity 200ms ease;
   }
   
   .ripple-overlay.active {
-    transform: translate(-50%, -50%) scale(150);
     opacity: 1;
   }
   

@@ -107,6 +107,17 @@ test("guest patient portal keeps a UI login path and authenticated booking feedb
   assert.doesNotMatch(loggedPatientSource, /selectedDoctor/);
 });
 
+test("appointment modal uses a flat translucent backdrop instead of an oversized ripple", async () => {
+  const source = await readFile(
+    new URL("../../main/resources/static/assets/css/patientDashboard.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /\.ripple-overlay\s*\{[^}]*inset:\s*0;[^}]*background-color:\s*rgba\(/s);
+  assert.match(source, /\.ripple-overlay\.active\s*\{[^}]*opacity:\s*1;/s);
+  assert.doesNotMatch(source, /scale\(150\)/);
+});
+
 test("prescription page uses one native form submit path with live feedback", async () => {
   const source = await readFile(
     new URL("../../main/resources/static/pages/addPrescription.html", import.meta.url),
