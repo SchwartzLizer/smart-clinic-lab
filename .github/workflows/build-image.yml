@@ -28,6 +28,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify:frontend
+      - name: Verify release smoke contract
+        run: node --test scripts/smoke-demo.test.mjs
 
   image:
     name: Build Docker image

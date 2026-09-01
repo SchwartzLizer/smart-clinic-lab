@@ -1,0 +1,133 @@
+name: Phase 3 Release Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      SMOKE_BASE_URL:
+        description: HTTPS root URL of manually deployed demo service (for example, https://demo.example.com)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  guard-main:
+    name: Reject non-main dispatches
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require default main branch
+        env:
+          CURRENT_REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          test "$CURRENT_REF" = "refs/heads/main"
+          test "$DEFAULT_BRANCH" = "main"
+
+  release-candidate:
+    name: Build immutable release candidate
+    needs: guard-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      source_commit: ${{ steps.candidate.outputs.source_commit }}
+      expected_app_version: ${{ steps.candidate.outputs.expected_app_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java for version metadata
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Resolve application version
+        id: version
+        working-directory: app
+        run: |
+          version="$(./mvnw --batch-mode help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          test -n "$version"
+          printf 'value=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build linux amd64 image once
+        env:
+          IMAGE_REF: smart-clinic:${{ github.sha }}
+        run: docker build --platform linux/amd64 --file app/Dockerfile --tag "$IMAGE_REF" app
+
+      - name: Save candidate and create release manifest
+        id: candidate
+        env:
+          IMAGE_REF: smart-clinic:${{ github.sha }}
+          SOURCE_COMMIT: ${{ github.sha }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          EXPECTED_APP_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          mkdir -p release-candidate
+          image_id="$(docker image inspect --format '{{.Id}}' "$IMAGE_REF")"
+          docker image save "$IMAGE_REF" | gzip --no-name > release-candidate/smart-clinic-linux-amd64.tar.gz
+          archive_sha256="$(sha256sum release-candidate/smart-clinic-linux-amd64.tar.gz | awk '{print $1}')"
+          export IMAGE_ID="$image_id"
+          export ARCHIVE_SHA256="$archive_sha256"
+          printf 'source_commit=%s\n' "$SOURCE_COMMIT" >> "$GITHUB_OUTPUT"
+          printf 'expected_app_version=%s\n' "$EXPECTED_APP_VERSION" >> "$GITHUB_OUTPUT"
+          node <<'NODE'
+          const { writeFileSync } = require('node:fs');
+          const manifest = {
+            schemaVersion: 1,
+            sourceCommit: process.env.SOURCE_COMMIT,
+            imageId: process.env.IMAGE_ID,
+            platform: 'linux/amd64',
+            archiveSha256: process.env.ARCHIVE_SHA256,
+            workflowRunId: process.env.WORKFLOW_RUN_ID,
+            workflowRunAttempt: process.env.WORKFLOW_RUN_ATTEMPT,
+            expectedAppVersion: process.env.EXPECTED_APP_VERSION
+          };
+          writeFileSync('release-candidate/release-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+          sha256sum release-candidate/release-manifest.json > release-candidate/release-manifest.sha256
+          {
+            echo '## Release candidate manifest'
+            echo '```json'
+            cat release-candidate/release-manifest.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-clinic-release-candidate-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release-candidate/release-manifest.json
+            release-candidate/release-manifest.sha256
+            release-candidate/smart-clinic-linux-amd64.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke-demo:
+    name: Protected demo smoke gate
+    needs: release-candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: demo
+    env:
+      SMOKE_BASE_URL: ${{ inputs.SMOKE_BASE_URL }}
+      EXPECTED_REVISION: ${{ needs.release-candidate.outputs.source_commit }}
+      EXPECTED_VERSION: ${{ needs.release-candidate.outputs.expected_app_version }}
+      EXPECTED_ENVIRONMENT: cloud
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify manually deployed demo
+        run: node scripts/smoke-demo.mjs
