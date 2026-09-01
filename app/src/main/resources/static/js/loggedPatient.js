@@ -8,7 +8,6 @@ import { getPatientData } from './services/patientServices.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDoctorCards();
-  resumeSelectedDoctor();
 });
 
 window.addEventListener("doctor:selected", async (event) => {
@@ -125,20 +124,6 @@ export function showBookingOverlay(doctor, patient) {
   });
 }
 
-async function resumeSelectedDoctor() {
-  const savedDoctor = sessionStorage.getItem("selectedDoctor");
-  if (!savedDoctor) return;
-
-  try {
-    const doctor = JSON.parse(savedDoctor);
-    const patient = await getPatientData();
-    sessionStorage.removeItem("selectedDoctor");
-    showBookingOverlay(doctor, patient);
-  } catch (error) {
-    sessionStorage.removeItem("selectedDoctor");
-    console.error("Failed to resume appointment booking:", error);
-  }
-}
 
 
 

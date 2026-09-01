@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const {
   buildPrescription,
+  reportPrescriptionLoadError,
   submitPrescription,
 } = await import("../../main/resources/static/js/addPrescription.js?test");
 
@@ -67,6 +68,21 @@ test("submitPrescription makes failures visible and allows retry", async () => {
   assert.equal(submitButton.disabled, false);
 });
 
+test("prescription-load failures produce a bounded diagnostic", async () => {
+  const originalWarn = console.warn;
+  const warnings = [];
+  console.warn = (...args) => warnings.push(args);
+
+  try {
+    await Promise.reject(new Error("sensitive response body must not be logged"))
+      .catch(() => reportPrescriptionLoadError());
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.deepEqual(warnings, [["Unable to load existing prescription."]]);
+});
+
 test("public patient portal does not activate the role-only redirect guard", async () => {
   const source = await readFile(
     new URL("../../main/resources/static/pages/patientDashboard.html", import.meta.url),
@@ -84,10 +100,11 @@ test("guest patient portal keeps a UI login path and authenticated booking feedb
   ]);
 
   assert.match(headerSource, /role==="patient"[\s\S]*login\.id="patientLogin"/);
-  assert.match(loggedPatientSource, /resumeSelectedDoctor\(\)/);
   assert.match(loggedPatientSource, /Appointment booked successfully\./);
   assert.match(doctorCardSource, /new CustomEvent\("doctor:selected"/);
   assert.match(loggedPatientSource, /window\.addEventListener\("doctor:selected"/);
+  assert.doesNotMatch(loggedPatientSource, /resumeSelectedDoctor/);
+  assert.doesNotMatch(loggedPatientSource, /selectedDoctor/);
 });
 
 test("prescription page uses one native form submit path with live feedback", async () => {

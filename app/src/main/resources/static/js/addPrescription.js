@@ -32,6 +32,10 @@ export async function submitPrescription({ prescription, save, status, submitBut
   return false;
 }
 
+export function reportPrescriptionLoadError() {
+  console.warn("Unable to load existing prescription.");
+}
+
 function initializePage() {
   const form = document.getElementById("prescriptionForm");
   const savePrescriptionBtn = document.getElementById("savePrescription");
@@ -60,7 +64,7 @@ function initializePage() {
         dosageInput.value = existingPrescription.dosage || "";
         notesInput.value = existingPrescription.doctorNotes || "";
       })
-      .catch(() => {});
+      .catch(() => reportPrescriptionLoadError());
   }
 
   if (mode === "view") {
